@@ -1,0 +1,52 @@
+{
+  "name": "mmo-match",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run",
+    "test": "vitest",
+    "generate:guild-codes": "tsx scripts/generate-guild-codes.ts",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "pnpm db:seed"
+  },
+  "dependencies": {
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@prisma/client": "^6.16.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.6.0",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.364.0",
+    "nodemailer": "^6.9.13",
+    "next": "14.2.3",
+    "pg": "^8.11.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.16.2",
+    "@types/node": "20.12.7",
+    "@types/react": "18.2.21",
+    "@types/react-dom": "18.2.7",
+    "autoprefixer": "10.4.17",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.3",
+    "postcss": "8.4.35",
+    "tailwindcss": "3.4.3",
+    "typescript": "5.4.5",
+    "@playwright/test": "^1.43.1",
+    "vitest": "^1.5.0",
+    "tsx": "^4.7.0",
+    "@types/nodemailer": "^6.4.12"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules
+.next
+.env*
+public/uploads/*
+!.gitkeep
+prisma/*.db
+playwright-report/
+test-results/

@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GamePref {
+  WORLD_OF_WARCRAFT @map("world_of_warcraft")
+  FINAL_FANTASY_XIV @map("final_fantasy_xiv")
+  LOST_ARK @map("lost_ark")
+  ELDER_SCROLLS_ONLINE @map("elder_scrolls_online")
+  NEW_WORLD @map("new_world")
+  GUILD_WARS_2 @map("guild_wars_2")
+  BLACK_DESERT_ONLINE @map("black_desert_online")
+}
+
+enum TimeSlot {
+  WEEKDAYS_MORNINGS @map("weekdays_mornings")
+  WEEKDAYS_EVENINGS @map("weekdays_evenings")
+  WEEKDAYS_NIGHTS @map("weekdays_nights")
+  WEEKENDS_MORNINGS @map("weekends_mornings")
+  WEEKENDS_AFTERNOONS @map("weekends_afternoons")
+  WEEKENDS_EVENINGS @map("weekends_evenings")
+  WEEKENDS_ALL_DAY @map("weekends_all_day")
+}
+
+enum Language {
+  ENGLISH @map("english")
+  SPANISH @map("spanish")
+  FRENCH @map("french")
+  GERMAN @map("german")
+  PORTUGUESE @map("portuguese")
+  RUSSIAN @map("russian")
+  CHINESE @map("chinese")
+}
+
+enum Playstyle {
+  CASUAL @map("casual")
+  COMPETITIVE @map("competitive")
+  ROLE_PLAYING @map("role_playing")
+  PVE_FOCUSED @map("pve_focused")
+  PVP_FOCUSED @map("pvp_focused")
+  EXPLORER @map("explorer")
+}
+
+enum SwipeDirection {
+  YES @map("yes")
+  NO @map("no")
+}
+
+enum MatchStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  createdAt DateTime   @default(now())
+  profile   Profile?
+  sessions  Session[]
+  otpTokens OtpToken[]
+}
+
+model Profile {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  name         String
+  avatarUrl    String?
+  bio          String?       @db.VarChar(200)
+  twitterLink  String?
+  redditLink   String?
+  gamePref     GamePref?
+  timeSlot     TimeSlot?
+  language     Language?
+  playstyle    Playstyle?
+  isVerified   Boolean       @default(false)
+  isShadowbanned Boolean     @default(false)
+  isChild      Boolean       @default(false)
+  guardianProfileId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  swipesGiven  Swipe[]       @relation("SwipeSwiper")
+  swipesTaken  Swipe[]       @relation("SwipeSwiped")
+  matchesAsOne Match[]       @relation("MatchUser1")
+  matchesAsTwo Match[]       @relation("MatchUser2")
+  messages     Message[]
+  guilds       GuildMembership[]
+  guildsOwned  Guild[]       @relation("GuildOwner")
+  guildMessages GuildMessage[]
+  guildCreationCodes GuildCreationCode[] @relation("GuildCodeCreator")
+  guardian     Profile?      @relation("GuardianChildren", fields: [guardianProfileId], references: [id], onDelete: SetNull)
+  children     Profile[]     @relation("GuardianChildren")
+  matchApprovals Match[]     @relation("GuardianMatchApproval")
+  matchBlocks   Match[]      @relation("GuardianMatchBlock")
+  badgeCollections ProfileBadge[]
+  guildEventsCreated GuildEvent[] @relation("GuildEventCreator")
+  guildEventAlerts   GuildEventAlert[] @relation("GuildEventAlertSubscription")
+  guildInvitesCreated GuildQrInvite[] @relation("GuildInviteCreator")
+  redeemedGuildCodes GuildCreationCode[] @relation("GuildCodeRedeemer")
+  guildPayments       GuildCreationPayment[] @relation("GuildPaymentPayer")
+}
+
+model Swipe {
+  id        String         @id @default(uuid())
+  swiperId  String
+  swipedId  String
+  direction SwipeDirection
+  createdAt DateTime       @default(now())
+
+  swiper Profile @relation("SwipeSwiper", fields: [swiperId], references: [id], onDelete: Cascade)
+  swiped Profile @relation("SwipeSwiped", fields: [swipedId], references: [id], onDelete: Cascade)
+
+  @@unique([swiperId, swipedId])
+}
+
+model Match {
+  id       String   @id @default(uuid())
+  user1Id  String
+  user2Id  String
+  status   MatchStatus @default(ACTIVE)
+  requiresGuardianApproval Boolean @default(false)
+  approvedByProfileId String?
+  approvedAt DateTime?
+  blockedByProfileId String?
+  blockedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user1 Profile @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 Profile @relation("MatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages Message[]
+  guardianApprover Profile? @relation("GuardianMatchApproval", fields: [approvedByProfileId], references: [id], onDelete: SetNull)
+  guardianBlocker Profile? @relation("GuardianMatchBlock", fields: [blockedByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([user1Id, user2Id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  matchId   String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  match  Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender Profile @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OtpToken {
+  id         String   @id @default(uuid())
+  userId     String
+  email      String
+  tokenHash  String
+  expiresAt  DateTime
+  consumed   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum GuildRole {
+  OWNER
+  OFFICER
+  MEMBER
+}
+
+model Guild {
+  id          String            @id @default(uuid())
+  name        String            @db.VarChar(80)
+  description String?           @db.VarChar(250)
+  ownerId     String
+  inviteCode  String            @unique @db.VarChar(16)
+  creationCodeId String         @unique
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  owner   Profile @relation("GuildOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  creationCode GuildCreationCode @relation("GuildCreation", fields: [creationCodeId], references: [id], onDelete: Cascade)
+  members GuildMembership[]
+  messages GuildMessage[]
+  invites  GuildQrInvite[]
+  events   GuildEvent[]
+}
+
+model GuildMembership {
+  id        String    @id @default(uuid())
+  guildId   String
+  profileId String
+  role      GuildRole @default(MEMBER)
+  nickname  String?   @db.VarChar(80)
+  isBlockedByGuardian Boolean @default(false)
+  createdAt DateTime  @default(now())
+
+  guild   Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, profileId])
+}
+
+enum GuildEventLocationType {
+  ONLINE
+  OFFLINE
+}
+
+enum GuildEventAlertChannel {
+  EMAIL
+  SMS
+  DISCORD
+  TELEGRAM
+}
+
+model GuildEvent {
+  id          String   @id @default(uuid())
+  guildId     String
+  title       String   @db.VarChar(120)
+  description String?  @db.VarChar(500)
+  locationType GuildEventLocationType @default(ONLINE)
+  locationDetail String? @db.VarChar(200)
+  startsAt     DateTime
+  imageUrl     String? @db.VarChar(250)
+  createdByProfileId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guild   Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  creator Profile @relation("GuildEventCreator", fields: [createdByProfileId], references: [id], onDelete: Cascade)
+  alerts  GuildEventAlert[]
+}
+
+model GuildEventAlert {
+  id        String                 @id @default(uuid())
+  eventId   String
+  profileId String
+  channel   GuildEventAlertChannel
+  createdAt DateTime              @default(now())
+
+  event   GuildEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  profile Profile    @relation("GuildEventAlertSubscription", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, profileId, channel])
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  slug        String   @unique @db.VarChar(60)
+  name        String   @db.VarChar(120)
+  description String?  @db.VarChar(280)
+  latitude    Decimal  @db.Decimal(10, 7)
+  longitude   Decimal  @db.Decimal(10, 7)
+  radiusMeters Int     @default(50)
+  qrSecret    String?  @db.VarChar(64)
+  qrRequired  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  collections ProfileBadge[]
+}
+
+model ProfileBadge {
+  id         String   @id @default(uuid())
+  profileId  String
+  badgeId    String
+  collectedAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  badge   Badge   @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, badgeId])
+}
+
+model GuildQrInvite {
+  id          String   @id @default(uuid())
+  guildId     String
+  code        String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  guild      Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  createdBy  Profile? @relation("GuildInviteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+model GuildMessage {
+  id        String   @id @default(uuid())
+  guildId   String
+  senderId  String
+  content   String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  guild   Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  sender  Profile @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model GuildCreationCode {
+  id          String            @id @default(uuid())
+  code        String            @unique
+  expiresAt   DateTime
+  createdAt   DateTime          @default(now())
+  redeemedAt  DateTime?
+  redeemedByProfileId String?
+  createdByProfileId  String?
+
+  payment GuildCreationPayment?
+  guild   Guild?              @relation("GuildCreation")
+
+  redeemedBy Profile? @relation("GuildCodeRedeemer", fields: [redeemedByProfileId], references: [id], onDelete: SetNull)
+  createdBy Profile? @relation("GuildCodeCreator", fields: [createdByProfileId], references: [id], onDelete: SetNull)
+}
+
+model GuildCreationPayment {
+  id             String         @id @default(uuid())
+  codeId         String         @unique
+  chainId        Int
+  tokenAddress   String?
+  payerAddress   String
+  amountWei      String
+  txHash         String         @unique
+  status         PaymentStatus  @default(PENDING)
+  createdAt      DateTime       @default(now())
+  confirmedAt    DateTime?
+  payerProfileId String?
+
+  code  GuildCreationCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  payer Profile?          @relation("GuildPaymentPayer", fields: [payerProfileId], references: [id], onDelete: SetNull)
+}

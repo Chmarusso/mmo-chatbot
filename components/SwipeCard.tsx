@@ -1,0 +1,119 @@
+"use client";
+
+import { motion, PanInfo } from "framer-motion";
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import type { Profile } from "@/types/profile";
+import { preferenceLabel, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
+import { cn } from "@/lib/utils";
+
+const PLACEHOLDER = "/avatar-placeholder.svg";
+
+interface SwipeCardProps {
+  profile: Profile;
+  onSwipe: (direction: "yes" | "no") => void;
+}
+
+export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (info.offset.x > 120) {
+      onSwipe("yes");
+    } else if (info.offset.x < -120) {
+      onSwipe("no");
+    }
+  };
+
+  return (
+    <motion.div
+      className={cn(
+        "absolute inset-0 flex flex-col rounded-3xl border border-accent-cyan/20 bg-surface/90 p-6 shadow-glow lg:p-10"
+      )}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.5}
+      onDragEnd={handleDragEnd}
+      whileDrag={{ rotate: 5, scale: 1.02 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+    >
+      <div className="flex flex-col items-center gap-4 lg:gap-6">
+        <div className="relative h-32 w-32 overflow-hidden rounded-full border border-accent-purple/40 shadow-glow-purple lg:h-40 lg:w-40">
+          <Image
+            src={profile.avatarUrl || PLACEHOLDER}
+            alt={profile.name}
+            width={160}
+            height={160}
+            className="h-full w-full object-cover"
+          />
+        </div>
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold lg:text-3xl">{profile.name}</h2>
+          {profile.bio && <p className="text-sm text-gray-300 lg:text-base">{profile.bio}</p>}
+        </div>
+      </div>
+      <div className="mt-6 space-y-3 lg:space-y-4">
+        <div className="flex flex-wrap justify-center gap-2 text-xs lg:gap-3 lg:text-sm">
+          {profile.gamePref && (
+            <Badge variant="glow">
+              {preferenceLabel(profile.gamePref, GAME_OPTIONS)}
+            </Badge>
+          )}
+          {profile.playstyle && (
+            <Badge variant="glow">
+              {preferenceLabel(profile.playstyle, PLAYSTYLES)}
+            </Badge>
+          )}
+          {profile.timeSlot && (
+            <Badge variant="glow">
+              {preferenceLabel(profile.timeSlot, TIME_SLOTS)}
+            </Badge>
+          )}
+          {profile.language && (
+            <Badge variant="glow">
+              {preferenceLabel(profile.language, LANGUAGES)}
+            </Badge>
+          )}
+        </div>
+        <div className="flex justify-center gap-3 lg:gap-4">
+          {profile.twitterLink && (
+            <a
+              href={profile.twitterLink.startsWith("http") ? profile.twitterLink : `https://twitter.com/${profile.twitterLink.replace(/^@/, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-accent-cyan/40 px-3 py-1 text-xs text-accent-cyan transition hover:bg-accent-cyan/10 lg:px-4 lg:py-1.5 lg:text-sm"
+            >
+              Twitter
+            </a>
+          )}
+          {profile.redditLink && (
+            <a
+              href={profile.redditLink.startsWith("http") ? profile.redditLink : `https://reddit.com/${profile.redditLink}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-accent-purple/40 px-3 py-1 text-xs text-accent-purple transition hover:bg-accent-purple/10 lg:px-4 lg:py-1.5 lg:text-sm"
+            >
+              Reddit
+            </a>
+          )}
+        </div>
+      </div>
+      <div className="mt-auto grid grid-cols-2 gap-3 pt-6 lg:gap-4 lg:pt-8">
+        <button
+          type="button"
+          onClick={() => onSwipe("no")}
+          className="rounded-2xl border border-red-500/40 bg-red-500/10 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20 lg:py-4 lg:text-base"
+        >
+          Pass
+        </button>
+        <button
+          type="button"
+          onClick={() => onSwipe("yes")}
+          className="rounded-2xl border border-accent-cyan/40 bg-accent-cyan/20 py-3 text-sm font-medium text-accent-cyan transition hover:bg-accent-cyan/30 lg:py-4 lg:text-base"
+        >
+          Squad Up
+        </button>
+      </div>
+    </motion.div>
+  );
+}
