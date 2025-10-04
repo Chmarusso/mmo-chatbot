@@ -51,8 +51,9 @@ async function resolveMembershipContext(guildId: string, viewerId: string) {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { guildId: string } }
+  { params }: { params: Promise<{ guildId: string }> }
 ) {
+  const { guildId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -61,7 +62,7 @@ export async function GET(
 
   let context;
   try {
-    context = await resolveMembershipContext(params.guildId, profile.id);
+    context = await resolveMembershipContext(guildId, profile.id);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -70,7 +71,7 @@ export async function GET(
 
   const messages = await prisma.guildMessage.findMany({
     where: {
-      guildId: params.guildId,
+      guildId: guildId,
       createdAt: { gte: retentionDate },
     },
     orderBy: { createdAt: "asc" },
@@ -103,8 +104,9 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { guildId: string } }
+  { params }: { params: Promise<{ guildId: string }> }
 ) {
+  const { guildId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -113,7 +115,7 @@ export async function POST(
 
   let context;
   try {
-    context = await resolveMembershipContext(params.guildId, profile.id);
+    context = await resolveMembershipContext(guildId, profile.id);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -138,7 +140,7 @@ export async function POST(
 
   const message = await prisma.guildMessage.create({
     data: {
-      guildId: params.guildId,
+      guildId: guildId,
       senderId: profile.id,
       content: content.trim(),
     },

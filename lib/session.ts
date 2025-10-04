@@ -21,7 +21,8 @@ export async function createSession(userId: string) {
     },
   });
 
-  cookies().set(SESSION_COOKIE_NAME, token, {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -31,15 +32,17 @@ export async function createSession(userId: string) {
 }
 
 export async function destroySession(token?: string) {
-  const sessionToken = token ?? cookies().get(SESSION_COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const sessionToken = token ?? cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!sessionToken) return;
 
   await prisma.session.deleteMany({ where: { token: sessionToken } });
-  cookies().delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
 export async function getCurrentUser() {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
 
   const session = await prisma.session.findUnique({
@@ -54,13 +57,13 @@ export async function getCurrentUser() {
   });
 
   if (!session) {
-    cookies().delete(SESSION_COOKIE_NAME);
+    cookieStore.delete(SESSION_COOKIE_NAME);
     return null;
   }
 
   if (session.expiresAt.getTime() <= Date.now()) {
     await prisma.session.delete({ where: { token } }).catch(() => undefined);
-    cookies().delete(SESSION_COOKIE_NAME);
+    cookieStore.delete(SESSION_COOKIE_NAME);
     return null;
   }
 

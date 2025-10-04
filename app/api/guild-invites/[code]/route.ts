@@ -4,9 +4,10 @@ import { serializeGuild, serializeQrInvite } from "@/lib/guild";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
-  const normalizedCode = params.code.trim().toUpperCase();
+  const { code } = await params;
+  const normalizedCode = code.trim().toUpperCase();
 
   const invite = await prisma.guildQrInvite.findUnique({
     where: { code: normalizedCode },

@@ -4,8 +4,8 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
 
 ## Features
 - Passwordless login flow that emails (or logs) six-digit OTP codes and magic links.
-- Guided profile builder with avatar uploads, MMO preference enums, and social links.
-- Swipe deck that filters candidates by game, language, playstyle, and time slot, with instant toast on mutual matches.
+- Guided profile builder with avatar uploads, MMO preference enums, social links, timezone hints, and locale-aware language defaults.
+- Swipe deck that filters candidates by shared MMO and language, with instant toast on mutual matches.
 - Matches list and polling chat room so new messages appear without a page refresh.
 - Settings page with sign-out and full account deletion that cascades through matches, swipes, and messages.
 - Middleware-backed session guard that redirects unauthenticated users to the landing page.
@@ -14,9 +14,11 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
 - Shadowban moderation tools with automated LLM review of recent messages.
 - Kid accounts with guardian approvals, read-only chat oversight, and parent-managed matches/guild access.
 - Location-based badge hunts (GPS + QR codes) that reward players for visiting real-world hotspots.
+- In-app feedback portal so players can report bugs or suggest improvements directly from Settings.
 - Self-service data export that bundles your direct and guild messages.
 - Guild events with photos, online/offline locations, scheduling, and multi-channel alerts (email/SMS/Discord/Telegram).
 - Auto-generated OG preview cards for players, guilds, and events.
+- Rich sample seed that provisions guardian/kid accounts, a starter guild, badges/events, and 100 randomized pilots (complete with DiceBear avatars) for instant matchmaking demos.
 
 ## Tech Stack
 - Next.js 14 App Router • React 18 Server/Client Components
@@ -65,8 +67,14 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
    - Run `pnpm exec prisma migrate deploy` in production/CI.
    - `pnpm exec prisma studio` opens a browser UI to inspect tables.
 
-4. **Seed verified players (optional)**
-   - Verify trusted profiles directly in the database or via Prisma Studio by toggling the `isVerified` flag on `Profile` rows. Only verified players can create guilds.
+4. **Seed preference tables and demo data (optional)**
+   ```bash
+   pnpm seed:preferences
+   pnpm db:seed
+   ```
+   - `pnpm seed:preferences` hydrates the `Game`, `TimeSlotOption`, `LanguageOption`, and `PlaystyleOption` lookup tables.
+   - `pnpm db:seed` seeds a verified guardian/kid pair, a starter guild with events/badges, and 100 random pilot profiles (names, bios, avatars, preferences) so the swipe deck has immediate candidates.
+   - Verify additional profiles directly in the database or via Prisma Studio by toggling the `isVerified` flag on `Profile` rows. Only verified players can create guilds.
    - Generate creation codes with `pnpm generate:guild-codes <amount>` (add `--creator-email=` to attribute a creator). Codes expire after 30 days and must be funded on-chain before use.
    - Guild officers can mint one-hour QR invites from the guild detail page; shareable URLs are embedded in the QR image for standard camera apps.
    - Guardians can create kid accounts via `/api/parent/kids` and manage matches/guilds through the `parent/` API suite.
@@ -76,7 +84,7 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
    ```bash
    pnpm dev
    ```
-   Visit `http://localhost:3000` and request a login link. The dashboard, profile, matches, chat, and settings routes now require a valid session cookie.
+   Visit `http://localhost:3000`, request a login link, and accept the Terms of Use and Privacy Policy prompt. The dashboard, profile, matches, chat, and settings routes now require a valid session cookie.
 
 ## Useful Commands
 | Command | Description |
@@ -88,6 +96,8 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
 | `pnpm test:unit` | Execute the Vitest suite for fast utility tests. |
 | `pnpm test:e2e` | Run the Playwright end-to-end suite. Set `PLAYWRIGHT_SKIP_WEB_SERVER=1` if the dev server is already running. |
 | `pnpm generate:guild-codes <amount>` | Bulk-generate guild creation codes with 30-day expiry. |
+| `pnpm seed:preferences` | Populate lookup tables for games, time slots, languages, and playstyles. |
+| `pnpm generate:fakes <profileId> [count]` | Create demo matches for a given profile (default count: 5). |
 | `pnpm exec prisma migrate dev --name <label>` | Apply schema changes locally and generate migrations. |
 | `pnpm exec prisma migrate deploy` | Apply pending migrations in production/CI. |
 | `pnpm exec prisma generate` | Regenerate the Prisma client after schema edits. |
@@ -98,7 +108,7 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
 - Run `pnpm test:unit` for quick Vitest feedback on utilities (`tests/unit`).
 - Ensure `DATABASE_URL` points to an isolated database; tests create and clean up users, OTP tokens, guild memberships, and sessions.
 - Playwright auto-starts the dev server (`npm run dev`) unless `PLAYWRIGHT_SKIP_WEB_SERVER=1` is set.
-- The sample tests (`tests/e2e/auth-flow.spec.ts`, `tests/e2e/homepage.spec.ts`) walk through OTP login, profile completion, and homepage smoke checks.
+- The sample tests (`tests/e2e/auth-flow.spec.ts`, `tests/e2e/homepage.spec.ts`, `tests/e2e/match-conversation.spec.ts`, `tests/e2e/profile-persistence.spec.ts`, `tests/e2e/account-settings.spec.ts`) cover OTP login, profile persistence across sessions, account sign-out/deletion flows, and a complete mutual-match chat flow.
 
 ## Project Layout
 ```

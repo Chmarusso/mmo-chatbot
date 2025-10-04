@@ -109,3 +109,49 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ success: true, matched, matchId, requiresApproval, matchStatus });
 }
+
+export async function DELETE(request: Request) {
+  const profile = await getOrCreateProfile().catch(() => null);
+
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const swipedId = url.searchParams.get("swipedId");
+
+  if (!swipedId) {
+    return NextResponse.json({ error: "Missing swipedId" }, { status: 400 });
+  }
+
+  try {
+    await prisma.swipe.delete({
+      where: {
+        swiperId_swipedId: {
+          swiperId: profile.id,
+          swipedId,
+        },
+      },
+    });
+  } catch (error) {
+    return NextResponse.json({ error: "Swipe not found" }, { status: 404 });
+  }
+
+  const [user1Id, user2Id] = [profile.id, swipedId].sort();
+  const existingMatch = await prisma.match.findUnique({
+    where: {
+      user1Id_user2Id: {
+        user1Id,
+        user2Id,
+      },
+    },
+  });
+
+  let matchRemoved = false;
+  if (existingMatch) {
+    await prisma.match.delete({ where: { id: existingMatch.id } });
+    matchRemoved = true;
+  }
+
+  return NextResponse.json({ success: true, matchRemoved });
+}

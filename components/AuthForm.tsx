@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
@@ -14,12 +15,18 @@ export function AuthForm({ redirectPath }: AuthFormProps) {
   const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [hasAccepted, setHasAccepted] = useState(false);
 
   const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!email) {
       toast.error("Please enter your email address");
+      return;
+    }
+
+    if (!hasAccepted) {
+      toast.error("Please accept the Terms and Privacy Policy to continue");
       return;
     }
 
@@ -133,9 +140,30 @@ export function AuthForm({ redirectPath }: AuthFormProps) {
           required
         />
       </div>
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Sending code..." : "Send login code"}
-      </Button>
+      <div className="space-y-3">
+        <label className="flex items-start gap-3 text-xs text-gray-400">
+          <input
+            type="checkbox"
+            checked={hasAccepted}
+            onChange={(event) => setHasAccepted(event.target.checked)}
+            className="mt-1 h-4 w-4 rounded border border-accent-cyan/40 bg-transparent accent-accent-cyan"
+          />
+          <span>
+            I agree to the
+            <Link href="/terms-of-use" className="mx-1 text-accent-cyan hover:text-accent-purple">
+              Terms of Use
+            </Link>
+            and
+            <Link href="/privacy-policy" className="ml-1 text-accent-cyan hover:text-accent-purple">
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+        <Button type="submit" className="w-full" disabled={isSubmitting || !hasAccepted}>
+          {isSubmitting ? "Sending code..." : "Send login code"}
+        </Button>
+      </div>
     </form>
   );
 }

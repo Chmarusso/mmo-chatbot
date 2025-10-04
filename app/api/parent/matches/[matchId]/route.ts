@@ -6,8 +6,9 @@ const forbidden = NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
 export async function POST(
   request: Request,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const { matchId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile || profile.isChild) {
@@ -21,7 +22,7 @@ export async function POST(
   }
 
   const match = await prisma.match.findUnique({
-    where: { id: params.matchId },
+    where: { id: matchId },
     include: {
       user1: {
         select: {

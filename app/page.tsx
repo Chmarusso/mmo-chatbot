@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AuthForm } from "@/components/AuthForm";
 
 interface HomePageProps {
@@ -9,6 +10,11 @@ interface HomePageProps {
 }
 
 export const revalidate = 0;
+
+export const metadata: Metadata = {
+  title: "MMO Match | Squad Up",
+  description: "Request a magic link and join MMO Match to find your next raid party.",
+};
 
 const featureHighlights = [
   "Build a party-ready profile in minutes",

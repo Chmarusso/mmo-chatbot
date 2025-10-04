@@ -4,9 +4,10 @@ import { serializeCreationCode, getGuildCodeStatus } from "@/lib/guild";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
-  const normalized = params.code.trim().toUpperCase();
+  const { code } = await params;
+  const normalized = code.trim().toUpperCase();
 
   const record = await prisma.guildCreationCode.findUnique({
     where: { code: normalized },

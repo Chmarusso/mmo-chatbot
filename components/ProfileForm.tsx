@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Profile, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { AvatarUploader } from "@/components/AvatarUploader";
+import { cn } from "@/lib/utils";
+
+const BROWSER_LANGUAGE_MAP: Record<string, string> = {
+  en: "english",
+  es: "spanish",
+  fr: "french",
+  de: "german",
+  pt: "portuguese",
+  ru: "russian",
+  zh: "chinese",
+  pl: "polish",
+};
 
 interface ProfileFormProps {
   profile: Profile;
@@ -18,34 +30,108 @@ interface ProfileFormProps {
 type FormState = {
   name: string;
   bio: string;
-  twitterLink: string;
-  redditLink: string;
   gamePref: string;
   timeSlot: string;
   language: string;
   playstyle: string;
+  notifyOnNewMatch: boolean;
+  notifyOnNewMessage: boolean;
+  notifyOnAnnouncements: boolean;
 };
+
+const STEP_COUNT = 3;
 
 export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
   const [formState, setFormState] = useState<FormState>({
     name: profile.name ?? "",
     bio: profile.bio ?? "",
-    twitterLink: profile.twitterLink ?? "",
-    redditLink: profile.redditLink ?? "",
     gamePref: profile.gamePref ?? "",
     timeSlot: profile.timeSlot ?? "",
     language: profile.language ?? "",
     playstyle: profile.playstyle ?? "",
+    notifyOnNewMatch: profile.notifyOnNewMatch ?? true,
+    notifyOnNewMessage: profile.notifyOnNewMessage ?? true,
+    notifyOnAnnouncements: profile.notifyOnAnnouncements ?? true,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? null);
+  const [step, setStep] = useState(0);
+  const [gameSearch, setGameSearch] = useState("");
+  const sortedGames = useMemo(
+    () => [...GAME_OPTIONS].sort((a, b) => a.label.localeCompare(b.label)),
+    []
+  );
+  const filteredGames = useMemo(() => {
+    const query = gameSearch.trim().toLowerCase();
+    if (!query) return sortedGames;
+    return sortedGames.filter((option) => option.label.toLowerCase().includes(query));
+  }, [sortedGames, gameSearch]);
 
-  const handleChange = (key: keyof FormState, value: string) => {
+  useEffect(() => {
+    if (profile.language || formState.language) {
+      return;
+    }
+
+    try {
+      const navigatorLanguages = typeof navigator !== "undefined" ? navigator.languages ?? [navigator.language] : [];
+      for (const locale of navigatorLanguages) {
+        if (!locale) continue;
+        const languageCode = locale.toLowerCase().split("-")[0];
+        const mappedLanguage = languageCode ? BROWSER_LANGUAGE_MAP[languageCode] : undefined;
+        if (mappedLanguage) {
+          setFormState((prev) => ({ ...prev, language: mappedLanguage }));
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Could not detect browser language", error);
+    }
+  }, [profile.language, formState.language]);
+
+  const timeZoneLabel = useMemo(() => {
+    try {
+      const { timeZone } = Intl.DateTimeFormat().resolvedOptions();
+      const offsetMinutes = new Date().getTimezoneOffset();
+      const sign = offsetMinutes <= 0 ? "+" : "-";
+      const absoluteMinutes = Math.abs(offsetMinutes);
+      const hours = String(Math.floor(absoluteMinutes / 60)).padStart(2, "0");
+      const minutes = String(absoluteMinutes % 60).padStart(2, "0");
+      const offset = `${sign}${hours}:${minutes}`;
+      return timeZone ? `${timeZone} (UTC${offset})` : `UTC${offset}`;
+    } catch (error) {
+      console.error("Could not resolve user timezone", error);
+      return null;
+    }
+  }, []);
+
+  const isFinalStep = step === STEP_COUNT - 1;
+
+  const handleChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!isFinalStep) {
+      if (step === 0 && (!formState.gamePref || !formState.playstyle)) {
+        toast.error("Pick your MMO and playstyle to continue.");
+        return;
+      }
+      if (step === 1 && (!formState.timeSlot || !formState.language)) {
+        toast.error("Select your preferred time slot and language.");
+        return;
+      }
+      setStep((prev) => Math.min(prev + 1, STEP_COUNT - 1));
+      return;
+    }
+
+    const form = event.currentTarget;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -57,13 +143,14 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
         body: JSON.stringify({
           name: formState.name.trim(),
           bio: formState.bio.trim() || null,
-          twitterLink: formState.twitterLink.trim() || null,
-          redditLink: formState.redditLink.trim() || null,
           gamePref: formState.gamePref || null,
           timeSlot: formState.timeSlot || null,
           language: formState.language || null,
           playstyle: formState.playstyle || null,
           avatarUrl,
+          notifyOnNewMatch: formState.notifyOnNewMatch,
+          notifyOnNewMessage: formState.notifyOnNewMessage,
+          notifyOnAnnouncements: formState.notifyOnAnnouncements,
         }),
       });
 
@@ -81,7 +168,7 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Could not save profile. Try again.");
+      toast.error(error instanceof Error ? error.message : "Could not save profile. Try again.");
     } finally {
       setIsSaving(false);
     }
@@ -89,86 +176,104 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="flex flex-col items-center gap-4">
-        <AvatarUploader profile={profile} onUpload={setAvatarUrl} />
-        <p className="text-xs text-gray-400">
-          Upload a square image up to 2MB. We host avatars locally and serve them fast.
-        </p>
+      <div className="flex items-center justify-center gap-2">
+        {Array.from({ length: STEP_COUNT }).map((_, index) => {
+          const isCurrent = index === step;
+          const isComplete = index < step;
+          return (
+            <span
+              key={index}
+              className={cn(
+                "h-2 w-2 rounded-full border border-accent-cyan/40 transition-all",
+                isCurrent && "bg-accent-cyan scale-110",
+                !isCurrent && isComplete && "bg-accent-purple",
+                !isCurrent && !isComplete && "bg-transparent"
+              )}
+            />
+          );
+        })}
       </div>
 
-      <div className="grid gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Display Name</Label>
-          <Input
-            id="name"
-            value={formState.name}
-            onChange={(event) => handleChange("name", event.target.value)}
-            required
-            maxLength={60}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            value={formState.bio}
-            onChange={(event) => handleChange("bio", event.target.value)}
-            maxLength={200}
-            placeholder="200 characters to tell party mates who you are."
-          />
-          <p className="text-xs text-gray-500 text-right">{formState.bio.length}/200</p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {step === 0 && (
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="twitter">Twitter</Label>
-            <Input
-              id="twitter"
-              placeholder="@handle or url"
-              value={formState.twitterLink}
-              onChange={(event) => handleChange("twitterLink", event.target.value)}
-            />
+            <Label>Preferred MMO</Label>
+            <Select
+              value={formState.gamePref || undefined}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setGameSearch("");
+                }
+              }}
+              onValueChange={(value) => {
+                handleChange("gamePref", value);
+                setGameSearch("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a game" />
+              </SelectTrigger>
+              <SelectContent>
+                <div className="p-2">
+                  <Input
+                    value={gameSearch}
+                    onChange={(event) => setGameSearch(event.target.value)}
+                    placeholder="Search games..."
+                    className="h-9"
+                    onKeyDown={(event) => event.stopPropagation()}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="max-h-56 overflow-y-auto">
+                  {filteredGames.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                  {filteredGames.length === 0 && (
+                    <div className="px-3 py-2 text-xs text-gray-400">No games found.</div>
+                  )}
+                </div>
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="reddit">Reddit</Label>
-            <Input
-              id="reddit"
-              placeholder="u/username"
-              value={formState.redditLink}
-              onChange={(event) => handleChange("redditLink", event.target.value)}
-            />
+            <Label>Playstyle</Label>
+            <Select
+              value={formState.playstyle || undefined}
+              onValueChange={(value) => handleChange("playstyle", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a playstyle" />
+              </SelectTrigger>
+              <SelectContent>
+                {PLAYSTYLES.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+      )}
 
-        <div className="space-y-2">
-          <Label>Preferred MMO</Label>
-          <Select
-            value={formState.gamePref || undefined}
-            onValueChange={(value) => handleChange("gamePref", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a game" />
-            </SelectTrigger>
-            <SelectContent>
-              {GAME_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {step === 1 && (
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Time Slot (UTC)</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label>Time Slot</Label>
+              {timeZoneLabel && (
+                <span className="text-xs text-gray-500">Your timezone: {timeZoneLabel}</span>
+              )}
+            </div>
             <Select
               value={formState.timeSlot || undefined}
               onValueChange={(value) => handleChange("timeSlot", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a time" />
+                <SelectValue placeholder="Select hours" />
               </SelectTrigger>
               <SelectContent>
                 {TIME_SLOTS.map((option) => (
@@ -179,6 +284,7 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
             <Label>Language</Label>
             <Select
@@ -191,37 +297,109 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
               <SelectContent>
                 {LANGUAGES.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    <span className="flex items-center gap-2">
+                      {option.icon && (
+                        <span className="text-lg" aria-hidden="true">
+                          {option.icon}
+                        </span>
+                      )}
+                      <span>{option.label}</span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
+      )}
 
-        <div className="space-y-2">
-          <Label>Playstyle</Label>
-          <Select
-            value={formState.playstyle || undefined}
-            onValueChange={(value) => handleChange("playstyle", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a playstyle" />
-            </SelectTrigger>
-            <SelectContent>
-              {PLAYSTYLES.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {step === 2 && (
+        <div className="space-y-6">
+          <div className="flex flex-col items-center gap-4">
+            <AvatarUploader profile={profile} onUpload={setAvatarUrl} />
+            <p className="text-xs text-gray-400">
+              Upload a square image up to 2MB. We host avatars locally and serve them fast.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Display Name</Label>
+              <Input
+                id="name"
+                value={formState.name}
+                onChange={(event) => handleChange("name", event.target.value)}
+                required
+                maxLength={60}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={formState.bio}
+                onChange={(event) => handleChange("bio", event.target.value)}
+                maxLength={200}
+                placeholder="Example: Support main healer ready for Mythic Raids. Loves theorycrafting and chill dungeon runs."
+              />
+              <div className="flex flex-col gap-1 text-xs text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+                <span>Share your role, goals, and play vibe to attract the right squad.</span>
+                <span>{formState.bio.length}/200</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-2xl border border-accent-cyan/20 bg-background/50 p-4">
+              <p className="text-sm font-semibold text-gray-200">Notifications</p>
+              <label className="flex items-start gap-3 text-xs text-gray-400 lg:text-sm">
+                <input
+                  type="checkbox"
+                  checked={formState.notifyOnNewMatch}
+                  onChange={(event) => handleChange("notifyOnNewMatch", event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border border-accent-cyan/40 bg-transparent accent-accent-cyan"
+                />
+                <span>Send me an email when I get a new match.</span>
+              </label>
+              <label className="flex items-start gap-3 text-xs text-gray-400 lg:text-sm">
+                <input
+                  type="checkbox"
+                  checked={formState.notifyOnNewMessage}
+                  onChange={(event) => handleChange("notifyOnNewMessage", event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border border-accent-cyan/40 bg-transparent accent-accent-cyan"
+                />
+                <span>Send me an email when a match sends a new message.</span>
+              </label>
+              <label className="flex items-start gap-3 text-xs text-gray-400 lg:text-sm">
+                <input
+                  type="checkbox"
+                  checked={formState.notifyOnAnnouncements}
+                  onChange={(event) => handleChange("notifyOnAnnouncements", event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border border-accent-cyan/40 bg-transparent accent-accent-cyan"
+                />
+                <span>Send me occasional product updates and announcements.</span>
+              </label>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      <Button type="submit" className="w-full" disabled={isSaving}>
-        {isSaving ? "Saving..." : "Save profile"}
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {step > 0 ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="sm:w-auto"
+            onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
+            disabled={isSaving}
+          >
+            Back
+          </Button>
+        ) : (
+          <span />
+        )}
+        <Button type="submit" className="sm:w-auto" disabled={isSaving}>
+          {isFinalStep ? (isSaving ? "Saving..." : "Save profile") : "Next"}
+        </Button>
+      </div>
     </form>
   );
 }

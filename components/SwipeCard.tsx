@@ -11,10 +11,18 @@ const PLACEHOLDER = "/avatar-placeholder.svg";
 
 interface SwipeCardProps {
   profile: Profile;
+  swipeDirection?: "yes" | "no" | null;
   onSwipe: (direction: "yes" | "no") => void;
 }
 
-export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
+const cardVariants = {
+  enter: { opacity: 0, scale: 0.95, y: 20 },
+  center: { opacity: 1, scale: 1, y: 0 },
+  exitLeft: { opacity: 0, x: -220, rotate: -8 },
+  exitRight: { opacity: 0, x: 220, rotate: 8 },
+};
+
+export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) {
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.x > 120) {
       onSwipe("yes");
@@ -22,6 +30,8 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
       onSwipe("no");
     }
   };
+
+  const exitVariant = swipeDirection === "yes" ? "exitRight" : swipeDirection === "no" ? "exitLeft" : "exitLeft";
 
   return (
     <motion.div
@@ -31,20 +41,27 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.5}
+      dragSnapToOrigin
       onDragEnd={handleDragEnd}
       whileDrag={{ rotate: 5, scale: 1.02 }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
+      variants={cardVariants}
+      initial="enter"
+      animate="center"
+      exit={exitVariant}
     >
       <div className="flex flex-col items-center gap-4 lg:gap-6">
-        <div className="relative h-32 w-32 overflow-hidden rounded-full border border-accent-purple/40 shadow-glow-purple lg:h-40 lg:w-40">
+        <div
+          className="relative h-32 w-32 overflow-hidden rounded-full border border-accent-purple/40 shadow-glow-purple lg:h-40 lg:w-40"
+          onDragStart={(event) => event.preventDefault()}
+        >
           <Image
             src={profile.avatarUrl || PLACEHOLDER}
             alt={profile.name}
             width={160}
             height={160}
             className="h-full w-full object-cover"
+            draggable={false}
+            unoptimized={!profile.avatarUrl || profile.avatarUrl === PLACEHOLDER}
           />
         </div>
         <div className="text-center">

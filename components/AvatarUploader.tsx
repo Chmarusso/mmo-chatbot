@@ -66,6 +66,7 @@ export function AvatarUploader({ profile, onUpload }: AvatarUploaderProps) {
           width={128}
           height={128}
           className="h-full w-full object-cover"
+          unoptimized={!previewUrl || previewUrl === PLACEHOLDER}
         />
       </div>
       <input

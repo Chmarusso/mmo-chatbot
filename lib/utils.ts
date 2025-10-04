@@ -7,12 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 
 type TimeSlotCode =
   | "weekdays_mornings"
+  | "weekdays_afternoons"
   | "weekdays_evenings"
-  | "weekdays_nights"
   | "weekends_mornings"
   | "weekends_afternoons"
   | "weekends_evenings"
-  | "weekends_all_day";
+  | "weekends_late";
 
 export const timeSlotsOverlap = (a?: TimeSlotCode | null, b?: TimeSlotCode | null) => {
   if (!a || !b) return false;
@@ -26,16 +26,14 @@ export const timeSlotsOverlap = (a?: TimeSlotCode | null, b?: TimeSlotCode | nul
   const aSlot = aRest.join("_");
   const bSlot = bRest.join("_");
 
-  if (aSlot === "all_day" || bSlot === "all_day") return true;
-
   const paired = `${aSlot}-${bSlot}`;
   const inverse = `${bSlot}-${aSlot}`;
 
   const looseMatches = new Set([
-    "evenings-nights",
-    "nights-evenings",
     "afternoons-evenings",
     "evenings-afternoons",
+    "evenings-late",
+    "late-evenings",
   ]);
 
   if (looseMatches.has(paired) || looseMatches.has(inverse)) {

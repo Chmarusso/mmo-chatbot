@@ -25,8 +25,9 @@ async function requireManager(guildId: string, profileId: string) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { guildId: string; eventId: string } }
+  { params }: { params: Promise<{ guildId: string; eventId: string }> }
 ) {
+  const { guildId, eventId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -36,7 +37,7 @@ export async function GET(
   const membership = await prisma.guildMembership.findUnique({
     where: {
       guildId_profileId: {
-        guildId: params.guildId,
+        guildId: guildId,
         profileId: profile.id,
       },
     },
@@ -48,8 +49,8 @@ export async function GET(
 
   const event = await prisma.guildEvent.findUnique({
     where: {
-      id: params.eventId,
-      guildId: params.guildId,
+      id: eventId,
+      guildId: guildId,
     },
     include: {
       alerts: true,
@@ -77,8 +78,9 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { guildId: string; eventId: string } }
+  { params }: { params: Promise<{ guildId: string; eventId: string }> }
 ) {
+  const { guildId, eventId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -86,7 +88,7 @@ export async function PATCH(
   }
 
   try {
-    await requireManager(params.guildId, profile.id);
+    await requireManager(guildId, profile.id);
   } catch {
     return forbidden;
   }
@@ -119,8 +121,8 @@ export async function PATCH(
 
   const updated = await prisma.guildEvent.update({
     where: {
-      id: params.eventId,
-      guildId: params.guildId,
+      id: eventId,
+      guildId: guildId,
     },
     data,
     include: {
@@ -137,8 +139,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { guildId: string; eventId: string } }
+  { params }: { params: Promise<{ guildId: string; eventId: string }> }
 ) {
+  const { guildId, eventId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -146,15 +149,15 @@ export async function DELETE(
   }
 
   try {
-    await requireManager(params.guildId, profile.id);
+    await requireManager(guildId, profile.id);
   } catch {
     return forbidden;
   }
 
   await prisma.guildEvent.delete({
     where: {
-      id: params.eventId,
-      guildId: params.guildId,
+      id: eventId,
+      guildId: guildId,
     },
   }).catch(() => null);
 

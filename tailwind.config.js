@@ -9,11 +9,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#0b0d16",
-        surface: "#13172a",
+        background: {
+          DEFAULT: "#0b0d16",
+          light: "#f8f9fa"
+        },
+        surface: {
+          DEFAULT: "#13172a",
+          light: "#ffffff"
+        },
         accent: {
           cyan: "#16f2d8",
-          purple: "#a855f7"
+          purple: "#a855f7",
+          pink: "#ec4899"
         }
       },
       boxShadow: {

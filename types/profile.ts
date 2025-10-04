@@ -9,12 +9,12 @@ export type GamePref =
 
 export type TimeSlot =
   | "weekdays_mornings"
+  | "weekdays_afternoons"
   | "weekdays_evenings"
-  | "weekdays_nights"
   | "weekends_mornings"
   | "weekends_afternoons"
   | "weekends_evenings"
-  | "weekends_all_day";
+  | "weekends_late";
 
 export type Language =
   | "english"
@@ -23,7 +23,8 @@ export type Language =
   | "german"
   | "portuguese"
   | "russian"
-  | "chinese";
+  | "chinese"
+  | "polish";
 
 export type Playstyle =
   | "casual"
@@ -46,9 +47,13 @@ export interface Profile {
   timeSlot: TimeSlot | null;
   language: Language | null;
   playstyle: Playstyle | null;
+  theme: string | null;
   isVerified: boolean;
   isShadowbanned: boolean;
   isChild: boolean;
+  notifyOnNewMatch: boolean;
+  notifyOnNewMessage: boolean;
+  notifyOnAnnouncements: boolean;
   guardianProfileId?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -57,6 +62,7 @@ export interface Profile {
 export type PreferenceOption<TValue extends string> = {
   label: string;
   value: TValue;
+  icon?: string;
 };
 
 export const GAME_OPTIONS: PreferenceOption<GamePref>[] = [
@@ -70,23 +76,24 @@ export const GAME_OPTIONS: PreferenceOption<GamePref>[] = [
 ];
 
 export const TIME_SLOTS: PreferenceOption<TimeSlot>[] = [
-  { label: "Weekdays Mornings (UTC)", value: "weekdays_mornings" },
-  { label: "Weekdays Evenings (UTC)", value: "weekdays_evenings" },
-  { label: "Weekdays Nights (UTC)", value: "weekdays_nights" },
-  { label: "Weekends Mornings (UTC)", value: "weekends_mornings" },
-  { label: "Weekends Afternoons (UTC)", value: "weekends_afternoons" },
-  { label: "Weekends Evenings (UTC)", value: "weekends_evenings" },
-  { label: "Weekends All Day (UTC)", value: "weekends_all_day" },
+  { label: "Weekday mornings (06:00-10:00)", value: "weekdays_mornings" },
+  { label: "Weekday afternoons (12:00-16:00)", value: "weekdays_afternoons" },
+  { label: "Weekday evenings (17:00-21:00)", value: "weekdays_evenings" },
+  { label: "Weekend mornings (08:00-12:00)", value: "weekends_mornings" },
+  { label: "Weekend afternoons (12:00-16:00)", value: "weekends_afternoons" },
+  { label: "Weekend evenings (16:00-20:00)", value: "weekends_evenings" },
+  { label: "Weekend late nights (20:00-24:00)", value: "weekends_late" },
 ];
 
 export const LANGUAGES: PreferenceOption<Language>[] = [
-  { label: "English", value: "english" },
-  { label: "Spanish", value: "spanish" },
-  { label: "French", value: "french" },
-  { label: "German", value: "german" },
-  { label: "Portuguese", value: "portuguese" },
-  { label: "Russian", value: "russian" },
-  { label: "Chinese", value: "chinese" },
+  { label: "English", value: "english", icon: "🇬🇧" },
+  { label: "Spanish", value: "spanish", icon: "🇪🇸" },
+  { label: "French", value: "french", icon: "🇫🇷" },
+  { label: "German", value: "german", icon: "🇩🇪" },
+  { label: "Portuguese", value: "portuguese", icon: "🇵🇹" },
+  { label: "Russian", value: "russian", icon: "🇷🇺" },
+  { label: "Chinese", value: "chinese", icon: "🇨🇳" },
+  { label: "Polish", value: "polish", icon: "🇵🇱" },
 ];
 
 export const PLAYSTYLES: PreferenceOption<Playstyle>[] = [
@@ -101,4 +108,11 @@ export const PLAYSTYLES: PreferenceOption<Playstyle>[] = [
 export const preferenceLabel = (
   value: string,
   options: PreferenceOption<string>[]
-): string => options.find((option) => option.value === value)?.label ?? value;
+): string => {
+  const option = options.find((current) => current.value === value);
+  if (!option) {
+    return value;
+  }
+
+  return option.icon ? `${option.icon} ${option.label}` : option.label;
+};

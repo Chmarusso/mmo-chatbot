@@ -6,8 +6,9 @@ const forbidden = NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
 export async function POST(
   request: Request,
-  { params }: { params: { guildId: string } }
+  { params }: { params: Promise<{ guildId: string }> }
 ) {
+  const { guildId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile || profile.isChild) {
@@ -26,7 +27,7 @@ export async function POST(
   const membership = await prisma.guildMembership.findUnique({
     where: {
       guildId_profileId: {
-        guildId: params.guildId,
+        guildId: guildId,
         profileId: childProfileId,
       },
     },

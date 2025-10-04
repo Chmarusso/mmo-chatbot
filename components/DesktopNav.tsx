@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { APP_LINKS } from "@/components/MobileNav";
 import { cn } from "@/lib/utils";
+import { useMatchBadge } from "@/components/MatchBadgeProvider";
 
 interface DesktopNavProps {
   active?: string;
@@ -11,6 +12,8 @@ interface DesktopNavProps {
 
 export function DesktopNav({ active }: DesktopNavProps) {
   const pathname = usePathname();
+  const visibleLinks = APP_LINKS.filter((link) => !link.hidden);
+  const { unreadMatches } = useMatchBadge();
 
   return (
     <nav className="sticky top-0 z-30 hidden border-b border-accent-cyan/20 bg-background/80 backdrop-blur lg:block">
@@ -22,9 +25,10 @@ export function DesktopNav({ active }: DesktopNavProps) {
           MMO Match
         </Link>
         <div className="flex items-center gap-1">
-          {APP_LINKS.map((link) => {
+          {visibleLinks.map((link) => {
             const isActive =
               active === link.label.toLowerCase() || pathname.startsWith(link.href);
+            const showBadge = link.href === "/matches" && unreadMatches > 0;
 
             return (
               <Link
@@ -37,7 +41,14 @@ export function DesktopNav({ active }: DesktopNavProps) {
                     : "text-gray-300 hover:bg-accent-cyan/10 hover:text-white"
                 )}
               >
-                {link.label}
+                <span className="relative flex items-center gap-2">
+                  {link.label}
+                  {showBadge && (
+                    <span className="flex h-5 min-w-[22px] items-center justify-center rounded-full bg-accent-pink px-2 text-[11px] font-semibold text-white shadow-[0_0_0_3px_rgba(10,12,24,0.9)]">
+                      {unreadMatches > 9 ? "9+" : unreadMatches}
+                    </span>
+                  )}
+                </span>
               </Link>
             );
           })}

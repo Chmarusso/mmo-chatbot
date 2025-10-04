@@ -21,3 +21,17 @@
 19. each guild, player, event should have an auto generated png og:image preview card with name and some nice gradients in the back
 20. update analytics that can be gathered from this app
 21. allow add event to calendar
+22. work on "/profile" page: remove twitter/reddit inputs and fix select placeholders
+23. fix saving profile form when prisma enum validation fails
+24. change time slots to clear hour ranges and show current timezone from browser
+25. add flags/icons to language select options
+26. refresh bio placeholder with example guidance
+27. hide guilds feature in navigation (keep underlying functionality)
+28. hide guilds only on UI while preserving routes
+29. simplify time slot labels to mornings/afternoons/evenings with example hours
+30. seed 100 random player profiles with avatars for demos
+31. add unit and end-to-end tests for mutual match + chat flow
+32. margin checkmark in language select, add Polish option, default language from locale
+33. update README.md and prompts.md
+34. update Prisma and Next.js to latest versions
+35. investigate dashboard prisma enum error and fix matchmaking query

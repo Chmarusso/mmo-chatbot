@@ -7,45 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum GamePref {
-  WORLD_OF_WARCRAFT @map("world_of_warcraft")
-  FINAL_FANTASY_XIV @map("final_fantasy_xiv")
-  LOST_ARK @map("lost_ark")
-  ELDER_SCROLLS_ONLINE @map("elder_scrolls_online")
-  NEW_WORLD @map("new_world")
-  GUILD_WARS_2 @map("guild_wars_2")
-  BLACK_DESERT_ONLINE @map("black_desert_online")
-}
-
-enum TimeSlot {
-  WEEKDAYS_MORNINGS @map("weekdays_mornings")
-  WEEKDAYS_EVENINGS @map("weekdays_evenings")
-  WEEKDAYS_NIGHTS @map("weekdays_nights")
-  WEEKENDS_MORNINGS @map("weekends_mornings")
-  WEEKENDS_AFTERNOONS @map("weekends_afternoons")
-  WEEKENDS_EVENINGS @map("weekends_evenings")
-  WEEKENDS_ALL_DAY @map("weekends_all_day")
-}
-
-enum Language {
-  ENGLISH @map("english")
-  SPANISH @map("spanish")
-  FRENCH @map("french")
-  GERMAN @map("german")
-  PORTUGUESE @map("portuguese")
-  RUSSIAN @map("russian")
-  CHINESE @map("chinese")
-}
-
-enum Playstyle {
-  CASUAL @map("casual")
-  COMPETITIVE @map("competitive")
-  ROLE_PLAYING @map("role_playing")
-  PVE_FOCUSED @map("pve_focused")
-  PVP_FOCUSED @map("pvp_focused")
-  EXPLORER @map("explorer")
-}
-
 enum SwipeDirection {
   YES @map("yes")
   NO @map("no")
@@ -64,6 +25,7 @@ model User {
   profile   Profile?
   sessions  Session[]
   otpTokens OtpToken[]
+  analyticsEvents AnalyticsEvent[]
 }
 
 model Profile {
@@ -74,10 +36,14 @@ model Profile {
   bio          String?       @db.VarChar(200)
   twitterLink  String?
   redditLink   String?
-  gamePref     GamePref?
-  timeSlot     TimeSlot?
-  language     Language?
-  playstyle    Playstyle?
+  gamePref     String?       @db.VarChar(64)
+  timeSlot     String?       @db.VarChar(64)
+  language     String?       @db.VarChar(64)
+  playstyle    String?       @db.VarChar(64)
+  theme        String?       @default("system") @db.VarChar(16)
+  notifyOnNewMatch   Boolean @default(true)
+  notifyOnNewMessage Boolean @default(true)
+  notifyOnAnnouncements Boolean @default(true)
   isVerified   Boolean       @default(false)
   isShadowbanned Boolean     @default(false)
   isChild      Boolean       @default(false)
@@ -104,6 +70,67 @@ model Profile {
   guildInvitesCreated GuildQrInvite[] @relation("GuildInviteCreator")
   redeemedGuildCodes GuildCreationCode[] @relation("GuildCodeRedeemer")
   guildPayments       GuildCreationPayment[] @relation("GuildPaymentPayer")
+  preferredGame     Game?            @relation("ProfileGame", fields: [gamePref], references: [value])
+  preferredTimeSlot TimeSlotOption?  @relation("ProfileTimeSlot", fields: [timeSlot], references: [value])
+  preferredLanguage LanguageOption?  @relation("ProfileLanguage", fields: [language], references: [value])
+  preferredPlaystyle PlaystyleOption? @relation("ProfilePlaystyle", fields: [playstyle], references: [value])
+  analyticsEvents AnalyticsEvent[]
+  feedback Feedback[]
+}
+
+model Game {
+  value       String   @id @db.VarChar(64)
+  label       String   @db.VarChar(128)
+  description String?  @db.VarChar(500)
+  screenshot  String?  @db.VarChar(500)
+  website     String?  @db.VarChar(500)
+  profiles    Profile[] @relation("ProfileGame")
+}
+
+model TimeSlotOption {
+  value    String   @id @db.VarChar(64)
+  label    String   @db.VarChar(128)
+  profiles Profile[] @relation("ProfileTimeSlot")
+}
+
+model LanguageOption {
+  value    String   @id @db.VarChar(64)
+  label    String   @db.VarChar(128)
+  icon     String?  @db.VarChar(16)
+  profiles Profile[] @relation("ProfileLanguage")
+}
+
+model PlaystyleOption {
+  value    String   @id @db.VarChar(64)
+  label    String   @db.VarChar(128)
+  profiles Profile[] @relation("ProfilePlaystyle")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   @db.VarChar(64)
+  profileId String?
+  userId    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@index([userId])
+  @@index([eventType])
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  profileId String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
 }
 
 model Swipe {
@@ -129,6 +156,8 @@ model Match {
   approvedAt DateTime?
   blockedByProfileId String?
   blockedAt DateTime?
+  user1LastViewedAt DateTime?
+  user2LastViewedAt DateTime?
   createdAt DateTime @default(now())
 
   user1 Profile @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)

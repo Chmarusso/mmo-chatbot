@@ -12,8 +12,9 @@ const serializeMessage = (message: { id: string; matchId: string; senderId: stri
 
 export async function GET(
   request: Request,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const { matchId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -21,7 +22,7 @@ export async function GET(
   }
 
   const match = await prisma.match.findUnique({
-    where: { id: params.matchId },
+    where: { id: matchId },
     include: {
       user1: {
         select: {
@@ -57,7 +58,7 @@ export async function GET(
 
   const messages = await prisma.message.findMany({
     where: {
-      matchId: params.matchId,
+      matchId: matchId,
       ...(sinceDate ? { createdAt: { gt: sinceDate } } : {}),
       createdAt: { gte: retentionDate },
     },
@@ -87,8 +88,9 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const { matchId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -96,7 +98,7 @@ export async function POST(
   }
 
   const match = await prisma.match.findUnique({
-    where: { id: params.matchId },
+    where: { id: matchId },
     include: {
       user1: {
         select: { id: true, guardianProfileId: true },

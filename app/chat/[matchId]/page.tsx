@@ -1,20 +1,44 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile, serializeProfile } from "@/lib/profile";
 import { ChatRoom } from "@/components/ChatRoom";
 import type { ChatMessage } from "@/types/chat";
-import { DesktopNav } from "@/components/DesktopNav";
 
 interface ChatPageProps {
-  params: { matchId: string };
+  params: Promise<{ matchId: string }>;
+}
+
+export async function generateMetadata({ params }: ChatPageProps): Promise<Metadata> {
+  const { matchId } = await params;
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      user1: { include: { user: true } },
+      user2: { include: { user: true } },
+    },
+  });
+
+  if (!match) {
+    return { title: "Chat not found | MMO Match" };
+  }
+
+  const name1 = match.user1.name;
+  const name2 = match.user2.name;
+
+  return {
+    title: `${name1} & ${name2} | Chat | MMO Match`,
+    description: "Coordinate your next run with real-time MMO Match chat.",
+  };
 }
 
 export default async function ChatPage({ params }: ChatPageProps) {
+  const { matchId } = await params;
   const profile = await getOrCreateProfile();
 
   const match = await prisma.match.findUnique({
-    where: { id: params.matchId },
+    where: { id: matchId },
     include: {
       user1: { include: { user: true } },
       user2: { include: { user: true } },
@@ -55,7 +79,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
   const rawMessages = await prisma.message.findMany({
     where: {
-      matchId: params.matchId,
+      matchId: matchId,
       createdAt: { gte: retentionDate },
     },
     orderBy: { createdAt: "asc" },
@@ -100,24 +124,22 @@ export default async function ChatPage({ params }: ChatPageProps) {
     : undefined;
 
   return (
-    <>
-      <DesktopNav active="matches" />
-      <main className="flex-1 px-4 py-6 pb-24 sm:px-6 lg:mx-auto lg:max-w-4xl lg:px-12 lg:py-12 lg:pb-12">
-        <Link
-          href="/matches"
-          className="mb-6 inline-flex items-center text-sm text-accent-cyan hover:text-accent-purple"
-        >
-          ← Back to matches
-        </Link>
-        <ChatRoom
-          matchId={params.matchId}
-          profileId={profile.id}
-          initialMessages={formattedMessages}
-          otherUserName={otherProfile.name}
-          canSend={canSend && !isGuardian}
-          readOnlyReason={readOnlyReason}
-        />
-      </main>
-    </>
+    <main className="flex-1 px-4 py-6 pb-24 sm:px-6 lg:mx-auto lg:max-w-4xl lg:px-12 lg:py-12 lg:pb-12">
+      <Link
+        href="/matches"
+        className="mb-6 inline-flex items-center text-sm text-accent-cyan hover:text-accent-purple"
+      >
+        ← Back to matches
+      </Link>
+      <ChatRoom
+        matchId={matchId}
+        profileId={profile.id}
+        initialMessages={formattedMessages}
+        otherUserName={otherProfile.name}
+        otherProfile={otherProfile}
+        canSend={canSend && !isGuardian}
+        readOnlyReason={readOnlyReason}
+      />
+    </main>
   );
 }

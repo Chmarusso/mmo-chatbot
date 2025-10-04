@@ -7,8 +7,9 @@ const forbidden = NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
 export async function POST(
   request: Request,
-  { params }: { params: { guildId: string; eventId: string } }
+  { params }: { params: Promise<{ guildId: string; eventId: string }> }
 ) {
+  const { guildId, eventId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -18,7 +19,7 @@ export async function POST(
   const membership = await prisma.guildMembership.findUnique({
     where: {
       guildId_profileId: {
-        guildId: params.guildId,
+        guildId: guildId,
         profileId: profile.id,
       },
     },
@@ -39,14 +40,14 @@ export async function POST(
   const alert = await prisma.guildEventAlert.upsert({
     where: {
       eventId_profileId_channel: {
-        eventId: params.eventId,
+        eventId: eventId,
         profileId: profile.id,
         channel,
       },
     },
     update: {},
     create: {
-      eventId: params.eventId,
+      eventId: eventId,
       profileId: profile.id,
       channel,
     },
@@ -57,8 +58,9 @@ export async function POST(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { guildId: string; eventId: string } }
+  { params }: { params: Promise<{ guildId: string; eventId: string }> }
 ) {
+  const { eventId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
@@ -76,7 +78,7 @@ export async function DELETE(
 
   await prisma.guildEventAlert.deleteMany({
     where: {
-      eventId: params.eventId,
+      eventId: eventId,
       profileId: profile.id,
       channel,
     },

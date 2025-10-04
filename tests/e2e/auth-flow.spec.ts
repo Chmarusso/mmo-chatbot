@@ -96,4 +96,5 @@ test('user can log in via OTP and update their profile', async ({ page }) => {
   await prisma.user.deleteMany({ where: { email: normalizeEmail(email) } });
   await prisma.otpToken.deleteMany({ where: { email: normalizeEmail(email) } });
   await prisma.session.deleteMany({ where: { userId: stored?.id } });
+  await prisma.profile.deleteMany({ where: { userId: stored?.id ?? '' } });
 });

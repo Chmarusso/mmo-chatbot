@@ -20,21 +20,22 @@ async function getMembership(guildId: string, profileId: string) {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { guildId: string } }
+  { params }: { params: Promise<{ guildId: string }> }
 ) {
+  const { guildId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const membership = await getMembership(params.guildId, profile.id);
+  const membership = await getMembership(guildId, profile.id);
   if (!membership) {
     return forbidden;
   }
 
   const events = await prisma.guildEvent.findMany({
-    where: { guildId: params.guildId },
+    where: { guildId: guildId },
     orderBy: { startsAt: "asc" },
     include: {
       alerts: true,
@@ -46,15 +47,16 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { guildId: string } }
+  { params }: { params: Promise<{ guildId: string }> }
 ) {
+  const { guildId } = await params;
   const profile = await getOrCreateProfile().catch(() => null);
 
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const membership = await getMembership(params.guildId, profile.id);
+  const membership = await getMembership(guildId, profile.id);
   if (!membership || !hasManagePermission(membership.role)) {
     return forbidden;
   }
@@ -86,7 +88,7 @@ export async function POST(
 
   const event = await prisma.guildEvent.create({
     data: {
-      guildId: params.guildId,
+      guildId: guildId,
       title: title.trim().slice(0, 120),
       description: description?.trim().slice(0, 500) || null,
       locationType,

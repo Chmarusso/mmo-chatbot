@@ -7,13 +7,14 @@ import { MobileNav } from "@/components/MobileNav";
 import { DesktopNav } from "@/components/DesktopNav";
 
 interface InvitePageProps {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }
 
 export const revalidate = 0;
 
 export default async function GuildInvitePage({ params }: InvitePageProps) {
-  const normalizedCode = params.code.trim().toUpperCase();
+  const { code } = await params;
+  const normalizedCode = code.trim().toUpperCase();
 
   const inviteRecord = await prisma.guildQrInvite.findUnique({
     where: { code: normalizedCode },
