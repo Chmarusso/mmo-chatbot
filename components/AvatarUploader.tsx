@@ -46,7 +46,8 @@ export function AvatarUploader({ profile, onUpload }: AvatarUploaderProps) {
         throw new Error("error" in payload ? payload.error : "Upload failed");
       }
 
-      setPreviewUrl(payload.url);
+      const urlWithCacheBust = `${payload.url}?t=${Date.now()}`;
+      setPreviewUrl(urlWithCacheBust);
       onUpload(payload.url);
       toast.success("Avatar updated");
     } catch (error) {
@@ -66,7 +67,8 @@ export function AvatarUploader({ profile, onUpload }: AvatarUploaderProps) {
           width={128}
           height={128}
           className="h-full w-full object-cover"
-          unoptimized={!previewUrl || previewUrl === PLACEHOLDER}
+          unoptimized
+          key={previewUrl || 'placeholder'}
         />
       </div>
       <input

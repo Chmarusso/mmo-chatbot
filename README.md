@@ -1,13 +1,16 @@
 # MMO Match
 
-MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adventurers using shared preferences, swipe-based discovery, and lightweight chat on top of Next.js 14, PostgreSQL, and Prisma.
+MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adventurers using shared preferences, swipe-based discovery, and lightweight chat on top of Next.js 15, PostgreSQL, and Prisma.
 
 ## Features
 - Passwordless login flow that emails (or logs) six-digit OTP codes and magic links.
 - Guided profile builder with avatar uploads, MMO preference enums, social links, timezone hints, and locale-aware language defaults.
 - Swipe deck that filters candidates by shared MMO and language, with instant toast on mutual matches.
 - Matches list and polling chat room so new messages appear without a page refresh.
+- Dark/light theme support with system default preference saved to user profile.
+- Games directory with individual game pages featuring screenshots, descriptions, official website links, star ratings, community comments, and player listings.
 - Settings page with sign-out and full account deletion that cascades through matches, swipes, and messages.
+- Notification preferences for new matches, messages, and announcements.
 - Middleware-backed session guard that redirects unauthenticated users to the landing page.
 - Invite-only guilds that verified players can create with prepaid creation codes, share as one-hour QR invites, and manage via unique links.
 - Guild chat for intra-squad coordination, plus analytics that surface player summaries, guardian activity, badge hunts, and event attendance trends.
@@ -21,11 +24,11 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
 - Rich sample seed that provisions guardian/kid accounts, a starter guild, badges/events, and 100 randomized pilots (complete with DiceBear avatars) for instant matchmaking demos.
 
 ## Tech Stack
-- Next.js 14 App Router • React 18 Server/Client Components
+- Next.js 15 App Router • React 19 Server/Client Components
 - TypeScript with strict settings
 - Prisma ORM + PostgreSQL
 - Tailwind CSS + Radix UI primitives
-- Framer Motion, react-hot-toast, lucide-react
+- Framer Motion, react-hot-toast, sonner, lucide-react
 - Playwright for end-to-end coverage
 
 ## Prerequisites
@@ -117,9 +120,12 @@ app/
   dashboard/             Swipe deck with matchmaking logic
   matches/               List of mutual matches
   chat/[matchId]/        Polling chat room
+  games/                 Games directory with individual game pages
+  games/[gameValue]/     Game detail page with ratings, comments, and players
   guilds/                Guild management + chat experience
   profile/               Profile editor (avatar upload, enums)
   settings/              Session + account management
+  feedback/              In-app feedback submission form
   api/                   Route handlers (auth, profile, swipes, messages, account, analytics)
     analytics/
       players/           Player summary metrics
@@ -139,9 +145,14 @@ app/
       guilds/[guildId]/events/ Manage guild events + alerts
     badges/              Badge directory + collection (GPS/QR)
     export/              Download a JSON bundle of your chats
+    feedback/            Submit user feedback
+    games/
+      [gameValue]/
+        rating/          Submit game ratings
+        comments/        Post and fetch game comments
     og/                  Dynamic Open Graph preview cards (player/guild/event)
     moderation/          Shadowban + automated review endpoints
-components/              UI primitives, swipe deck, chat room, forms
+components/              UI primitives, swipe deck, chat room, forms, game ratings/comments
 lib/                     Prisma client, auth/session helpers, mailer
 middleware.ts            Session guard + redirect rules
 prisma/schema.prisma     Database schema and enums
@@ -152,7 +163,8 @@ tests/e2e/               Playwright scenarios
 
 ## Core Application Flow
 - **Login**: `/api/auth/request-otp` hashes the OTP, stores it with expiry, and emails (or logs) the code plus magic link. `/auth/callback` verifies the code and issues a session cookie stored under `mmo_match_session`.
-- **Profiles**: `lib/profile.ts` ensures every authenticated user has a profile row. Preference enums mirror the options rendered in the UI to keep data constrained, and the `isVerified` flag gates guild creation.
+- **Profiles**: `lib/profile.ts` ensures every authenticated user has a profile row. Preference enums mirror the options rendered in the UI to keep data constrained, and the `isVerified` flag gates guild creation. Profile includes theme preference (light/dark/system) for UI customization.
+- **Games**: `/games` displays all supported MMOs in a grid layout. Each game links to `/games/{game-slug}` showing detailed information, community ratings (1-5 stars), user comments, and a list of active players. Game badges throughout the app are clickable links to their respective game pages.
 - **Guilds**: `/api/guilds` lets verified players spin up invite-only guilds using paid creation codes, `/api/guilds/[guildId]/invites` mints one-hour QR invites, `/api/guild-codes/pay` records EVM payments (ETH/ERC-20 on any chain), and `/api/guilds/join` handles membership via invite codes with nickname overrides. `/api/guilds/[guildId]/messages` powers real-time guild chat.
 - **Moderation**: `/api/moderation/shadowban` toggles shadowbans (requires `MODERATION_SECRET` header) and `/api/moderation/review` runs an OpenRouter LLM scan across a player’s last 10 messages, auto-shadowbanning on abusive or spammy content.
 - **Guardian controls**: `/api/parent/kids` manages linked kid accounts, `/api/parent/matches` lets guardians approve, block, or create friendships, `/api/parent/matches/[matchId]` handles approvals/blocks for existing chats, and `/api/parent/guilds/[guildId]` blocks or restores guild access.

@@ -11,7 +11,7 @@
 }
 
 body {
-  @apply bg-background text-white min-h-screen antialiased transition-colors;
+  @apply bg-background text-text-primary min-h-screen antialiased transition-colors font-sans;
 }
 
 .light body {
@@ -73,6 +73,15 @@ button {
 }
 
 /* Light mode buttons */
+.light button[class*="bg-accent-purple"] {
+  background-color: rgb(138 77 255) !important;
+  color: white !important;
+}
+
+.light button[class*="bg-accent-purple"]:hover {
+  background-color: rgb(116 62 230) !important;
+}
+
 .light button[class*="bg-accent-cyan"] {
   background-color: rgb(6 182 212) !important;
   color: white !important;

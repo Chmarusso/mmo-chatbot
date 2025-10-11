@@ -1,68 +1,30 @@
 "use client";
 
-import { motion, PanInfo } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types/profile";
 import { preferenceLabel, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
-import { cn } from "@/lib/utils";
 
 const PLACEHOLDER = "/avatar-placeholder.svg";
 
-interface SwipeCardProps {
+interface ProfilePreviewProps {
   profile: Profile;
-  swipeDirection?: "yes" | "no" | null;
-  onSwipe: (direction: "yes" | "no") => void;
 }
 
-const cardVariants = {
-  enter: { opacity: 0, scale: 0.95, y: 20 },
-  center: { opacity: 1, scale: 1, y: 0 },
-  exitLeft: { opacity: 0, x: -220, rotate: -8 },
-  exitRight: { opacity: 0, x: 220, rotate: 8 },
-};
-
-export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) {
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.x > 120) {
-      onSwipe("yes");
-    } else if (info.offset.x < -120) {
-      onSwipe("no");
-    }
-  };
-
-  const exitVariant = swipeDirection === "yes" ? "exitRight" : swipeDirection === "no" ? "exitLeft" : "exitLeft";
-
+export function ProfilePreview({ profile }: ProfilePreviewProps) {
   return (
-    <motion.div
-      className={cn(
-        "absolute inset-0 flex flex-col rounded-3xl border border-accent-cyan/20 bg-surface/90 p-6 shadow-glow lg:p-10"
-      )}
-      drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.5}
-      dragSnapToOrigin
-      onDragEnd={handleDragEnd}
-      whileDrag={{ rotate: 5, scale: 1.02 }}
-      variants={cardVariants}
-      initial="enter"
-      animate="center"
-      exit={exitVariant}
-    >
+    <div className="flex flex-col rounded-3xl border border-accent-cyan/20 bg-surface/90 p-6 shadow-glow lg:p-10">
       <div className="flex flex-col items-center gap-4 lg:gap-6">
-        <div
-          className="relative h-32 w-32 overflow-hidden rounded-full border border-accent-purple/40 shadow-glow-purple lg:h-40 lg:w-40"
-          onDragStart={(event) => event.preventDefault()}
-        >
+        <div className="relative h-32 w-32 overflow-hidden rounded-full border border-accent-purple/40 shadow-glow-purple lg:h-40 lg:w-40">
           <Image
-            src={profile.avatarUrl || PLACEHOLDER}
+            src={profile.avatarUrl ? `${profile.avatarUrl}?t=${Date.now()}` : PLACEHOLDER}
             alt={profile.name}
             width={160}
             height={160}
             className="h-full w-full object-cover"
-            draggable={false}
-            unoptimized={!profile.avatarUrl || profile.avatarUrl === PLACEHOLDER}
+            unoptimized
+            key={profile.avatarUrl || 'placeholder'}
           />
         </div>
         <div className="text-center">
@@ -76,7 +38,6 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
             <Link
               href={`/games/${profile.gamePref.replace(/_/g, '-')}`}
               className="inline-flex items-center rounded-full bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
-              onClick={(e) => e.stopPropagation()}
             >
               {preferenceLabel(profile.gamePref, GAME_OPTIONS)}
             </Link>
@@ -120,22 +81,6 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
           )}
         </div>
       </div>
-      <div className="mt-auto grid grid-cols-2 gap-3 pt-6 lg:gap-4 lg:pt-8">
-        <button
-          type="button"
-          onClick={() => onSwipe("no")}
-          className="rounded-2xl border border-red-500/40 bg-red-500/10 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20 lg:py-4 lg:text-base"
-        >
-          Pass
-        </button>
-        <button
-          type="button"
-          onClick={() => onSwipe("yes")}
-          className="rounded-2xl border border-accent-cyan/40 bg-accent-cyan/20 py-3 text-sm font-medium text-accent-cyan transition hover:bg-accent-cyan/30 lg:py-4 lg:text-base"
-        >
-          Squad Up
-        </button>
-      </div>
-    </motion.div>
+    </div>
   );
 }

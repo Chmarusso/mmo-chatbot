@@ -7,6 +7,7 @@ const nextConfig = {
   },
   images: {
     dangerouslyAllowSVG: true,
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: "https",
@@ -14,19 +15,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "images.blz-contentstack.com",
-      },
-      {
-        protocol: "https",
-        hostname: "img.finalfantasyxiv.com",
+        hostname: "shared.akamai.steamstatic.com",
       },
       {
         protocol: "https",
         hostname: "cdn.cloudflare.steamstatic.com",
-      },
-      {
-        protocol: "https",
-        hostname: "www.guildwars2.com",
       },
     ],
   },

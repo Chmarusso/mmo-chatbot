@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,16 +195,21 @@ export function ChatRoom({
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
             {otherProfile.gamePref && (
-              <Badge variant="glow">{preferenceLabel(otherProfile.gamePref, GAME_OPTIONS)}</Badge>
+              <Link
+                href={`/games/${otherProfile.gamePref.replace(/_/g, '-')}`}
+                className="inline-flex items-center rounded-full bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
+              >
+                {preferenceLabel(otherProfile.gamePref, GAME_OPTIONS)}
+              </Link>
             )}
             {otherProfile.playstyle && (
-              <Badge>{preferenceLabel(otherProfile.playstyle, PLAYSTYLES)}</Badge>
+              <Badge variant="playstyle">{preferenceLabel(otherProfile.playstyle, PLAYSTYLES)}</Badge>
             )}
             {otherProfile.timeSlot && (
-              <Badge>{preferenceLabel(otherProfile.timeSlot, TIME_SLOTS)}</Badge>
+              <Badge variant="timeslot">{preferenceLabel(otherProfile.timeSlot, TIME_SLOTS)}</Badge>
             )}
             {otherProfile.language && (
-              <Badge>{preferenceLabel(otherProfile.language, LANGUAGES)}</Badge>
+              <Badge variant="language">{preferenceLabel(otherProfile.language, LANGUAGES)}</Badge>
             )}
           </div>
           {otherProfile.bio && (

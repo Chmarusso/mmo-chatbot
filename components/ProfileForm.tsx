@@ -56,6 +56,13 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? null);
   const [step, setStep] = useState(0);
+
+  const handleAvatarUpload = (url: string | null) => {
+    setAvatarUrl(url);
+    if (onUpdated) {
+      onUpdated({ ...profile, avatarUrl: url });
+    }
+  };
   const [gameSearch, setGameSearch] = useState("");
   const sortedGames = useMemo(
     () => [...GAME_OPTIONS].sort((a, b) => a.label.localeCompare(b.label)),
@@ -316,7 +323,7 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
       {step === 2 && (
         <div className="space-y-6">
           <div className="flex flex-col items-center gap-4">
-            <AvatarUploader profile={profile} onUpload={setAvatarUrl} />
+            <AvatarUploader profile={profile} onUpload={handleAvatarUpload} />
             <p className="text-xs text-gray-400">
               Upload a square image up to 2MB. We host avatars locally and serve them fast.
             </p>

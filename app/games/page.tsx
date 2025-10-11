@@ -15,7 +15,7 @@ export default async function GamesPage() {
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-12 pb-24 lg:px-12">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-12 pb-24 lg:px-12">
       <header className="space-y-3 text-center lg:text-left">
         <h1 className="text-3xl font-semibold text-white lg:text-4xl">Supported Games</h1>
         <p className="text-sm text-gray-300 lg:text-base">
@@ -23,50 +23,31 @@ export default async function GamesPage() {
         </p>
       </header>
 
-      <section className="grid gap-6 lg:gap-8">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {games.map((game) => (
-          <article key={game.value} className="overflow-hidden rounded-3xl border border-accent-cyan/20 bg-surface/80">
-            {game.screenshot && (
-              <div className="relative h-48 w-full lg:h-64">
-                <Image
-                  src={game.screenshot}
-                  alt={game.label}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 1200px"
-                />
-              </div>
-            )}
-            <div className="p-6 lg:p-8">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-semibold text-white lg:text-3xl">{game.label}</h2>
-                  {game.description && (
-                    <p className="mt-2 text-sm text-gray-400 lg:text-base">
-                      {game.description}
-                    </p>
-                  )}
+          <Link key={game.value} href={`/games/${game.value.replace(/_/g, '-')}`}>
+            <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
+              {game.screenshot && (
+                <div className="relative h-40 w-full">
+                  <Image
+                    src={game.screenshot}
+                    alt={game.label}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
                 </div>
-                {game.website && (
-                  <a
-                    href={game.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-full border border-accent-cyan/40 bg-accent-cyan/10 px-4 py-2 text-sm font-medium text-accent-cyan transition hover:bg-accent-cyan/20"
-                  >
-                    Visit Site
-                    <ExternalLink size={16} />
-                  </a>
+              )}
+              <div className="flex flex-1 flex-col p-4">
+                <h2 className="text-lg font-semibold text-white">{game.label}</h2>
+                {game.description && (
+                  <p className="mt-2 line-clamp-3 text-xs text-text-secondary">
+                    {game.description}
+                  </p>
                 )}
               </div>
-              <Link
-                href="/profile"
-                className="mt-4 inline-flex rounded-full border border-accent-cyan/40 bg-accent-cyan/10 px-6 py-2 text-sm font-medium text-accent-cyan transition hover:bg-accent-cyan/20"
-              >
-                Set as your game
-              </Link>
-            </div>
-          </article>
+            </article>
+          </Link>
         ))}
       </section>
     </main>

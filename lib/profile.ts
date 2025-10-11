@@ -2,6 +2,9 @@ import type { Profile as PrismaProfile, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import type { Profile } from "@/types/profile";
+import { checkDailyLogin } from "@/lib/exp";
+import { completeReferral } from "@/lib/referral";
+import { cookies } from "next/headers";
 
 export const serializeProfile = (profile: PrismaProfile, user: User): Profile => ({
   id: profile.id,
@@ -42,6 +45,11 @@ export async function getOrCreateProfile(): Promise<Profile> {
   });
 
   if (existingProfile) {
+    // Check and award daily login EXP
+    checkDailyLogin(existingProfile.id).catch(err =>
+      console.error('Failed to check daily login:', err)
+    );
+
     return serializeProfile(existingProfile, user);
   }
 
@@ -51,6 +59,19 @@ export async function getOrCreateProfile(): Promise<Profile> {
       name: user.email.split("@")[0] ?? "MMO Player",
     },
   });
+
+  // Check for referral cookie and complete referral
+  const cookieStore = await cookies();
+  const referralCode = cookieStore.get('mmo_ref')?.value;
+
+  if (referralCode) {
+    completeReferral(created.id, referralCode).catch(err =>
+      console.error('Failed to complete referral:', err)
+    );
+
+    // Clear the referral cookie after use
+    cookieStore.delete('mmo_ref');
+  }
 
   return serializeProfile(created, user);
 }

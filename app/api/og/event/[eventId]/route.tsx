@@ -2,17 +2,16 @@ import { ImageResponse } from 'next/og';
 import { prisma } from "@/lib/prisma";
 import { gradientFromString, formatDateTime } from "@/lib/og";
 
-export const runtime = 'edge';
-
 const WIDTH = 1200;
 const HEIGHT = 630;
 
 export async function GET(
   _request: Request,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
+  const { eventId } = await params;
   const event = await prisma.guildEvent.findUnique({
-    where: { id: params.eventId },
+    where: { id: eventId },
     include: {
       guild: true,
     },

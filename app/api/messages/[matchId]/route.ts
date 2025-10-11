@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile } from "@/lib/profile";
+import { awardExp } from "@/lib/exp";
 
 const serializeMessage = (message: { id: string; matchId: string; senderId: string; content: string; createdAt: Date }) => ({
   id: message.id,
@@ -132,11 +133,17 @@ export async function POST(
 
   const message = await prisma.message.create({
     data: {
-      matchId: params.matchId,
+      matchId,
       senderId: profile.id,
       content: content.trim(),
     },
   });
+
+  // Award EXP for sending a message (rate-limited to 20/day)
+  awardExp({
+    profileId: profile.id,
+    eventType: 'MESSAGE_SENT',
+  }).catch(err => console.error('Failed to award message EXP:', err));
 
   return NextResponse.json({ message: serializeMessage(message) });
 }

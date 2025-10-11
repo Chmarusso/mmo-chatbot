@@ -35,3 +35,17 @@
 33. update README.md and prompts.md
 34. update Prisma and Next.js to latest versions
 35. investigate dashboard prisma enum error and fix matchmaking query
+36. move feedback form from settings to separate page and add notifications settings to settings
+37. modify /matches view to show one match per row with last message and timestamp
+38. add support for dark/light mode with system default option, save preference to profile
+39. prepare styles for light and dark mode with proper color contrast
+40. add new Games section to navigation menu with alphabetically ordered list
+41. add screenshots, descriptions, and official website links to game pages
+42. update Next.js to v15 and fix all async API compatibility issues (cookies, params)
+43. change color scheme to gaming/NFT platform aesthetic (#181120 background, #8A4DFF purple accent)
+44. modify games view to show 4 tiles per row on desktop
+45. create individual game subpages with screenshots, ratings, comments, and player listings
+46. make game badges clickable links to game detail pages
+47. add distinct colors and borders for different preference badge types (playstyle, timeslot, language)
+48. implement game comments feature with posting and fetching functionality
+49. update README.md and prompts.md with latest project features

@@ -8,7 +8,10 @@
       "Bash(npm run seed:*)",
       "Bash(npx tsx:*)",
       "Bash(pnpm update:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

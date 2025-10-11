@@ -48,6 +48,11 @@ model Profile {
   isShadowbanned Boolean     @default(false)
   isChild      Boolean       @default(false)
   guardianProfileId String?
+  exp          Int           @default(0)
+  level        Int           @default(1)
+  lastDailyLogin DateTime?
+  referralCode String?       @unique
+  referredById String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -76,6 +81,12 @@ model Profile {
   preferredPlaystyle PlaystyleOption? @relation("ProfilePlaystyle", fields: [playstyle], references: [value])
   analyticsEvents AnalyticsEvent[]
   feedback Feedback[]
+  gameRatings GameRating[] @relation("ProfileGameRating")
+  gameComments GameComment[] @relation("ProfileGameComment")
+  expEvents ExpEvent[] @relation("ProfileExpEvents")
+  referrals Referral[] @relation("ReferrerProfile")
+  referredBy Profile? @relation("ProfileReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referredProfiles Profile[] @relation("ProfileReferrals")
 }
 
 model Game {
@@ -85,6 +96,38 @@ model Game {
   screenshot  String?  @db.VarChar(500)
   website     String?  @db.VarChar(500)
   profiles    Profile[] @relation("ProfileGame")
+  ratings     GameRating[]
+  comments    GameComment[]
+}
+
+model GameRating {
+  id        String   @id @default(uuid())
+  gameValue String   @db.VarChar(64)
+  profileId String
+  rating    Int      @db.SmallInt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game    Game    @relation(fields: [gameValue], references: [value], onDelete: Cascade)
+  profile Profile @relation("ProfileGameRating", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([gameValue, profileId])
+  @@index([gameValue])
+}
+
+model GameComment {
+  id        String   @id @default(uuid())
+  gameValue String   @db.VarChar(64)
+  profileId String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game    Game    @relation(fields: [gameValue], references: [value], onDelete: Cascade)
+  profile Profile @relation("ProfileGameComment", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([gameValue])
+  @@index([profileId])
 }
 
 model TimeSlotOption {
@@ -372,4 +415,59 @@ model GuildCreationPayment {
 
   code  GuildCreationCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
   payer Profile?          @relation("GuildPaymentPayer", fields: [payerProfileId], references: [id], onDelete: SetNull)
+}
+
+enum ExpEventType {
+  OAUTH_VERIFICATION
+  STEAM_IMPORT
+  DAILY_LOGIN
+  MESSAGE_SENT
+  PROFILE_COMPLETE
+  FIRST_MATCH
+  GUILD_JOIN
+  GAME_RATING
+  GAME_COMMENT
+  REFERRAL_SIGNUP
+  REFERRAL_BONUS
+}
+
+model ExpEvent {
+  id         String       @id @default(uuid())
+  profileId  String
+  eventType  ExpEventType
+  expGained  Int
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+
+  profile Profile @relation("ProfileExpEvents", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+  @@index([profileId, eventType])
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  REWARDED
+}
+
+model Referral {
+  id            String         @id @default(uuid())
+  referrerId    String
+  referredId    String?
+  referralCode  String
+  status        ReferralStatus @default(PENDING)
+  visitedAt     DateTime       @default(now())
+  completedAt   DateTime?
+  rewardedAt    DateTime?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  referrer Profile  @relation("ReferrerProfile", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  @@index([referralCode])
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([status])
 }

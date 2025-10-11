@@ -4,12 +4,12 @@ import { GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from '../../types/pro
 const GAME_DETAILS = {
   world_of_warcraft: {
     description: 'Epic fantasy MMORPG with raids, dungeons, and endless adventure across Azeroth.',
-    screenshot: 'https://images.blz-contentstack.com/v3/assets/blt3452e3b114fab0cd/blt6c14f9c0f9e46eb7/64e4e0e1e0e17d3e4a8e6b1e/wow-header.jpg',
+    screenshot: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/header.jpg',
     website: 'https://worldofwarcraft.com',
   },
   final_fantasy_xiv: {
     description: 'Story-rich MMORPG with engaging combat, crafting, and a vibrant community.',
-    screenshot: 'https://img.finalfantasyxiv.com/lds/promo/h/j/C8x9LjJH_lMt8FDOIh0u2LMNKA.jpg',
+    screenshot: 'https://cdn.cloudflare.steamstatic.com/steam/apps/39210/header.jpg',
     website: 'https://www.finalfantasyxiv.com',
   },
   lost_ark: {
@@ -29,7 +29,7 @@ const GAME_DETAILS = {
   },
   guild_wars_2: {
     description: 'Dynamic events and player-driven story in this beloved free-to-play MMO.',
-    screenshot: 'https://www.guildwars2.com/images/og-image.jpg',
+    screenshot: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1284210/header.jpg',
     website: 'https://www.guildwars2.com',
   },
   black_desert_online: {
