@@ -89,15 +89,29 @@ model Profile {
   referredProfiles Profile[] @relation("ProfileReferrals")
 }
 
-model Game {
-  value       String   @id @db.VarChar(64)
+model GameCategory {
+  id          String   @id @default(uuid())
+  value       String   @unique @db.VarChar(64)
   label       String   @db.VarChar(128)
   description String?  @db.VarChar(500)
-  screenshot  String?  @db.VarChar(500)
-  website     String?  @db.VarChar(500)
-  profiles    Profile[] @relation("ProfileGame")
+  createdAt   DateTime @default(now())
+
+  games       Game[]   @relation("GameCategory")
+}
+
+model Game {
+  value       String        @id @db.VarChar(64)
+  label       String        @db.VarChar(128)
+  description String?       @db.VarChar(500)
+  screenshot  String?       @db.VarChar(500)
+  website     String?       @db.VarChar(500)
+  categoryId  String?
+  category    GameCategory? @relation("GameCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  profiles    Profile[]     @relation("ProfileGame")
   ratings     GameRating[]
   comments    GameComment[]
+
+  @@index([categoryId])
 }
 
 model GameRating {

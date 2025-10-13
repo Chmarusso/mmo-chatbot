@@ -12,6 +12,10 @@
     "test": "vitest",
     "generate:guild-codes": "tsx scripts/generate-guild-codes.ts",
     "db:seed": "tsx prisma/seed.ts",
+    "db:dump": "./scripts/db-dump.sh",
+    "db:restore": "./scripts/db-restore.sh",
+    "upload:db": "./scripts/upload-db.sh",
+    "deploy:vps": "./scripts/deploy.sh",
     "seed:preferences": "tsx prisma/seeds/preferenceOptions.ts",
     "generate:fakes": "tsx scripts/create-fake-matches.ts"
   },

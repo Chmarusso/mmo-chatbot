@@ -7,7 +7,9 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-gray-600/40 bg-gray-800/40 text-gray-300",
+        default: "border-accent-purple/50 bg-accent-purple/20 text-accent-purple",
+        secondary: "border-gray-600/40 bg-gray-800/40 text-gray-300",
+        outline: "border-gray-600/40 bg-transparent text-gray-300 hover:bg-gray-800/20",
         playstyle: "border-accent-cyan/50 bg-accent-cyan/10 text-accent-cyan",
         timeslot: "border-emerald-500/50 bg-emerald-500/10 text-emerald-400",
         language: "border-amber-500/50 bg-amber-500/10 text-amber-400",

@@ -127,14 +127,11 @@ export function AuthForm({ redirectPath }: AuthFormProps) {
   return (
     <form onSubmit={handleEmailSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium text-accent-cyan">
-          Email Address
-        </label>
         <Input
           id="email"
           type="email"
           autoComplete="email"
-          placeholder="you@mmoguild.com"
+          placeholder="you@ProbablyGmail.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -161,7 +158,7 @@ export function AuthForm({ redirectPath }: AuthFormProps) {
           </span>
         </label>
         <Button type="submit" className="w-full" disabled={isSubmitting || !hasAccepted}>
-          {isSubmitting ? "Sending code..." : "Send login code"}
+          {isSubmitting ? "Sending code..." : "Let me in"}
         </Button>
       </div>
     </form>

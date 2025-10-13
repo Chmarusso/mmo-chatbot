@@ -6,3 +6,4 @@ public/uploads/*
 prisma/*.db
 playwright-report/
 test-results/
+backups/

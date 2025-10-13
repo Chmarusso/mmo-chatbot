@@ -11,7 +11,10 @@
       "Bash(find:*)",
       "Bash(pnpm add:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(chmod:*)",
+      "Bash(pnpm db:dump:*)"
     ],
     "deny": [],
     "ask": []

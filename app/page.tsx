@@ -3,6 +3,19 @@ import type { Metadata } from "next";
 import { AuthForm } from "@/components/AuthForm";
 import { cookies } from "next/headers";
 import { trackReferralVisit } from "@/lib/referral";
+import {
+  Gamepad2,
+  Target,
+  Lock,
+  Zap,
+  Trophy,
+  Globe,
+  Clock,
+  Swords,
+  Shield,
+  Users,
+  Gift,
+} from "lucide-react";
 
 interface HomePageProps {
   searchParams: Promise<{
@@ -53,8 +66,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Left Column - Hero Content */}
             <div className="space-y-8 text-center lg:text-left">
               <div className="space-y-4">
-                <div className="inline-block rounded-full bg-accent-purple/10 px-4 py-1.5 text-sm font-medium text-accent-purple">
-                  🎮 Privacy-First Gaming Matchmaker
+                <div className="inline-flex items-center gap-2 rounded-full bg-accent-purple/10 px-4 py-1.5 text-sm font-medium text-accent-purple">
+                  <Gamepad2 size={16} />
+                  Privacy-First Gaming Matchmaker
                 </div>
                 <h1 className="text-4xl font-bold tracking-tight text-white lg:text-6xl">
                   Find Your Perfect{" "}
@@ -71,7 +85,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <div className="grid gap-4 sm:grid-cols-2 text-left">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/10">
-                    <span className="text-lg">🎯</span>
+                    <Target size={18} className="text-accent-purple" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Smart Matching</h3>
@@ -80,7 +94,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10">
-                    <span className="text-lg">🔒</span>
+                    <Lock size={18} className="text-accent-cyan" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Privacy First</h3>
@@ -89,7 +103,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/10">
-                    <span className="text-lg">⚡</span>
+                    <Zap size={18} className="text-accent-purple" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Instant Chat</h3>
@@ -98,7 +112,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10">
-                    <span className="text-lg">🏆</span>
+                    <Trophy size={18} className="text-accent-cyan" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Earn & Level Up</h3>
@@ -110,7 +124,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             {/* Right Column - Auth Form */}
             <div className="w-full max-w-md justify-self-center lg:justify-self-end">
-              <div className="space-y-6 rounded-3xl border border-accent-purple/30 bg-surface/80 p-8 shadow-glow lg:p-10">
+              <div className="space-y-6 rounded-3xl border border-accent-purple/30 bg-surface/80 p-8 lg:p-10">
                 {params?.error && (
                   <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                     Something went wrong. Please request a new link.
@@ -125,9 +139,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </p>
                 </div>
                 <AuthForm redirectPath={redirectPath} />
-                <p className="text-center text-xs text-text-secondary">
-                  Free forever. No credit card needed.
-                </p>
               </div>
             </div>
           </div>
@@ -186,7 +197,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 text-3xl">🌍</div>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10">
+                <Globe size={24} className="text-accent-purple" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Multi-Language Support</h3>
               <p className="text-sm text-text-secondary">
                 Find players who speak your language for better communication
@@ -194,7 +207,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 text-3xl">⏰</div>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10">
+                <Clock size={24} className="text-accent-cyan" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Time Zone Matching</h3>
               <p className="text-sm text-text-secondary">
                 Connect with players who are online when you are
@@ -202,7 +217,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 text-3xl">🎭</div>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10">
+                <Swords size={24} className="text-accent-purple" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Playstyle Filters</h3>
               <p className="text-sm text-text-secondary">
                 Casual or hardcore? PvP or PvE? Find your perfect match
@@ -210,7 +227,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 text-3xl">🛡️</div>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10">
+                <Shield size={24} className="text-accent-cyan" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold text-white">No Tracking</h3>
               <p className="text-sm text-text-secondary">
                 Zero analytics, zero ads, zero data selling. Your privacy matters
@@ -218,7 +237,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 text-3xl">👥</div>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10">
+                <Users size={24} className="text-accent-purple" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Guilds & Events</h3>
               <p className="text-sm text-text-secondary">
                 Create or join guilds, organize raids and gaming sessions
@@ -226,7 +247,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 text-3xl">🎁</div>
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10">
+                <Gift size={24} className="text-accent-cyan" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Referral Rewards</h3>
               <p className="text-sm text-text-secondary">
                 Invite friends, earn EXP, and level up together

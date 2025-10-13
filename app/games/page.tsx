@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { ExternalLink } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Games | MMO Match",
@@ -11,6 +11,14 @@ export const metadata: Metadata = {
 
 export default async function GamesPage() {
   const games = await prisma.game.findMany({
+    include: {
+      category: true,
+    },
+    orderBy: { label: "asc" },
+  });
+
+  // Get all categories for filter buttons
+  const categories = await prisma.gameCategory.findMany({
     orderBy: { label: "asc" },
   });
 
@@ -23,10 +31,25 @@ export default async function GamesPage() {
         </p>
       </header>
 
+      {/* Category Filter */}
+      <section className="flex flex-wrap gap-2">
+        <Badge variant="default" className="cursor-default">
+          All Games
+        </Badge>
+        {categories.map((category) => (
+          <Link key={category.id} href={`/games/category/${category.value}`}>
+            <Badge variant="outline" className="cursor-pointer transition hover:bg-accent-purple/10">
+              {category.label}
+            </Badge>
+          </Link>
+        ))}
+      </section>
+
+      {/* Games Grid */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {games.map((game) => (
-          <Link key={game.value} href={`/games/${game.value.replace(/_/g, '-')}`}>
-            <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
+          <article key={game.value} className="flex h-full flex-col overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
+            <Link href={`/games/${game.value.replace(/_/g, '-')}`} className="flex flex-col flex-1">
               {game.screenshot && (
                 <div className="relative h-40 w-full">
                   <Image
@@ -39,17 +62,33 @@ export default async function GamesPage() {
                 </div>
               )}
               <div className="flex flex-1 flex-col p-4">
-                <h2 className="text-lg font-semibold text-white">{game.label}</h2>
+                <h2 className="text-lg font-semibold text-white mb-2">{game.label}</h2>
+                {game.category && (
+                  <Link
+                    href={`/games/category/${game.category.value}`}
+                    className="w-fit"
+                  >
+                    <Badge variant="secondary" className="mb-2 text-xs hover:bg-accent-purple/20 transition">
+                      {game.category.label}
+                    </Badge>
+                  </Link>
+                )}
                 {game.description && (
-                  <p className="mt-2 line-clamp-3 text-xs text-text-secondary">
+                  <p className="mt-auto line-clamp-3 text-xs text-text-secondary">
                     {game.description}
                   </p>
                 )}
               </div>
-            </article>
-          </Link>
+            </Link>
+          </article>
         ))}
       </section>
+
+      {games.length === 0 && (
+        <div className="py-12 text-center">
+          <p className="text-text-secondary">No games found in this category.</p>
+        </div>
+      )}
     </main>
   );
 }
