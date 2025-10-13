@@ -4,8 +4,8 @@ import { getOrCreateProfile } from "@/lib/profile";
 import { ProfilePageClient } from "@/components/ProfilePageClient";
 
 export const metadata: Metadata = {
-  title: "Your Pilot Card | MMO Match",
-  description: "Update your MMO Match profile, avatar, schedule, and language to attract the ideal squad.",
+  title: "Your Pilot Card | MMOPLAYA",
+  description: "Update your MMOPLAYA profile, avatar, schedule, and language to attract the ideal squad.",
 };
 
 export default async function ProfilePage() {

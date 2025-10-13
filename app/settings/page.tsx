@@ -3,8 +3,8 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { getOrCreateProfile, serializeProfile } from "@/lib/profile";
 
 export const metadata: Metadata = {
-  title: "Settings | MMO Match",
-  description: "Manage your session, account preferences, and data export options on MMO Match.",
+  title: "Settings | MMOPLAYA",
+  description: "Manage your session, account preferences, and data export options on MMOPLAYA.",
 };
 
 export default async function SettingsPage() {

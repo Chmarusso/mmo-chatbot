@@ -8,8 +8,8 @@ import { GuildCreateForm } from "@/components/guild/GuildCreateForm";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Guilds | MMO Match",
-  description: "Create, manage, and coordinate your MMO Match guilds with invites, events, and chat.",
+  title: "Guilds | MMOPLAYA",
+  description: "Create, manage, and coordinate your MMOPLAYA guilds with invites, events, and chat.",
 };
 
 export default async function GuildsPage() {

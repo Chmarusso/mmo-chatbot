@@ -137,7 +137,7 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
       <div>
         <h2 className="text-lg font-semibold">Appearance</h2>
         <p className="text-sm text-gray-400">
-          Choose how MMO Match looks on your device.
+          Choose how MMOPLAYA looks on your device.
         </p>
         <div className="mt-4 flex gap-3">
           <button
@@ -178,7 +178,7 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
       <div className="border-t border-accent-cyan/10 pt-6">
         <h2 className="text-lg font-semibold">Session</h2>
         <p className="text-sm text-gray-400">
-          Sign out of MMO Match on this device.
+          Sign out of MMOPLAYA on this device.
         </p>
         <Button className="mt-4" onClick={handleSignOut} disabled={isProcessing}>
           Sign out
@@ -201,7 +201,7 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
       <div className="border-t border-accent-cyan/10 pt-6">
         <h2 className="text-lg font-semibold">Feedback</h2>
         <p className="text-sm text-gray-400">
-          Found a bug or have an idea? Send it our way so we can improve MMO Match.
+          Found a bug or have an idea? Send it our way so we can improve MMOPLAYA.
         </p>
         <div className="mt-4">
           <Link href="/feedback" className="text-accent-cyan transition hover:text-accent-purple">
@@ -212,7 +212,7 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
       <div className="border-t border-accent-cyan/10 pt-6">
         <h2 className="text-lg font-semibold">Legal</h2>
         <p className="text-sm text-gray-400">
-          Review the latest policies that keep MMO Match safe and fun for everyone.
+          Review the latest policies that keep MMOPLAYA safe and fun for everyone.
         </p>
         <div className="mt-4 flex flex-col gap-2 text-sm">
           <Link href="/terms-of-use" className="text-accent-cyan transition hover:text-accent-purple">
@@ -226,7 +226,7 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
       <div className="border-t border-accent-cyan/10 pt-6">
         <h2 className="text-lg font-semibold">Notifications</h2>
         <p className="text-sm text-gray-400">
-          Control when and how we notify you about activity on MMO Match.
+          Control when and how we notify you about activity on MMOPLAYA.
         </p>
         <div className="mt-4 space-y-4">
           <label className="flex items-center justify-between">

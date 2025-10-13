@@ -1,6 +1,6 @@
-# MMO Match
+# MMOPLAYA
 
-MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adventurers using shared preferences, swipe-based discovery, and lightweight chat on top of Next.js 15, PostgreSQL, and Prisma.
+MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adventurers using shared preferences, swipe-based discovery, and lightweight chat on top of Next.js 15, PostgreSQL, and Prisma.
 
 ## Features
 - Passwordless login flow that emails (or logs) six-digit OTP codes and magic links.
@@ -52,7 +52,7 @@ MMO Match is a mobile-first matchmaking experience for MMO players. It pairs adv
    SMTP_PORT="587"
    SMTP_USER="smtp-user"
    SMTP_PASS="smtp-pass"
-   SMTP_FROM="MMO Match <no-reply@mmo-match.gg>"
+   SMTP_FROM="MMOPLAYA <no-reply@mmo-match.gg>"
    OTP_EXPIRATION_MINUTES=10        # optional override
    SESSION_TTL_DAYS=30              # optional override
    MODERATION_SECRET="super-secret"      # required for moderation endpoints

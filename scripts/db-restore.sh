@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Database restore script for MMO Match
+# Database restore script for MMOPLAYA
 # Restores a SQL dump to the PostgreSQL database
 
 set -e

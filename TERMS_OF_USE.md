@@ -1,10 +1,10 @@
-# MMO Match Terms of Use
+# MMOPLAYA Terms of Use
 
 _Last updated: 2024-06-06_
 
-MMO Match is built to help players find teammates in a respectful, privacy-minded environment. These Terms of Use explain the rules that apply when you access or use the service. By using MMO Match, you agree to these terms.
+MMOPLAYA is built to help players find teammates in a respectful, privacy-minded environment. These Terms of Use explain the rules that apply when you access or use the service. By using MMOPLAYA, you agree to these terms.
 
-## 1. Who may use MMO Match
+## 1. Who may use MMOPLAYA
 - You must be at least 13 years old or have a verified guardian on your account.
 - Guardians are responsible for the activity of linked kid accounts and must review and approve matches before kids can chat or join guilds.
 - You promise that the information you provide is truthful and kept up to date.
@@ -16,12 +16,12 @@ MMO Match is built to help players find teammates in a respectful, privacy-minde
 - If you discover a security issue, please report it rather than attempting to exploit it.
 
 ## 3. Acceptable use
-- Do not use MMO Match for commercial solicitation, data harvesting, automated scraping, or any other activity that disrupts service for other users.
+- Do not use MMOPLAYA for commercial solicitation, data harvesting, automated scraping, or any other activity that disrupts service for other users.
 - Location-based badges are intended for legitimate visits to real-world locations. Be respectful of private property and local regulations.
 - Guardian tools must only be used for the accounts you are authorized to supervise.
 
 ## 4. Content and licensing
-- You retain ownership of the content you submit. You grant MMO Match a non-exclusive license to display and distribute that content solely for operating the service.
+- You retain ownership of the content you submit. You grant MMOPLAYA a non-exclusive license to display and distribute that content solely for operating the service.
 - We may remove content or suspend accounts that violate these Terms of Use or community guidelines.
 
 ## 5. Privacy and data
@@ -37,4 +37,4 @@ MMO Match is built to help players find teammates in a respectful, privacy-minde
 ## 8. Contact
 Questions about these terms? Email `legal@mmo-match.gg` and we’ll get back to you.
 
-Thank you for being part of the MMO Match community and helping us keep it welcoming for everyone.
+Thank you for being part of the MMOPLAYA community and helping us keep it welcoming for everyone.

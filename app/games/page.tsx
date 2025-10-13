@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
-  title: "Games | MMO Match",
-  description: "Browse every MMO supported in MMO Match and discover new worlds to explore.",
+  title: "Games | MMOPLAYA",
+  description: "Browse every MMO supported in MMOPLAYA and discover new worlds to explore.",
 };
 
 export default async function GamesPage() {
@@ -27,7 +27,7 @@ export default async function GamesPage() {
       <header className="space-y-3 text-center lg:text-left">
         <h1 className="text-3xl font-semibold text-white lg:text-4xl">Supported Games</h1>
         <p className="text-sm text-gray-300 lg:text-base">
-          MMO Match connects players across the titles below. Update your profile to squad up in your favourite worlds.
+          MMOPLAYA connects players across the titles below. Update your profile to squad up in your favourite worlds.
         </p>
       </header>
 

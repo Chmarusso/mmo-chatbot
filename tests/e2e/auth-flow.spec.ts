@@ -64,7 +64,7 @@ test('user can log in via OTP and update their profile', async ({ page }) => {
   await page.goto('/profile');
   await expect(page.locator('#name')).toBeVisible();
   await page.fill('#name', 'Playwright Hero');
-  await page.fill('#bio', 'Testing the realms of MMO Match.');
+  await page.fill('#bio', 'Testing the realms of MMOPLAYA.');
 
   await selectOption(page, 'Preferred MMO', /Final Fantasy XIV/i);
   await selectOption(page, 'Time Slot (UTC)', /Weekends Evenings/i);
@@ -86,7 +86,7 @@ test('user can log in via OTP and update their profile', async ({ page }) => {
 
   expect(stored?.profile).toMatchObject({
     name: 'Playwright Hero',
-    bio: 'Testing the realms of MMO Match.',
+    bio: 'Testing the realms of MMOPLAYA.',
     gamePref: 'final_fantasy_xiv',
     timeSlot: 'weekends_evenings',
     language: 'english',

@@ -41,7 +41,7 @@ export async function GET(
           fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
-        <div style={{ fontSize: 36, opacity: 0.8 }}>MMO Match Guild</div>
+        <div style={{ fontSize: 36, opacity: 0.8 }}>MMOPLAYA Guild</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ fontSize: 72, fontWeight: 700 }}>{guild.name}</div>
           <div style={{ fontSize: 24, opacity: 0.9, maxWidth: 700 }}>

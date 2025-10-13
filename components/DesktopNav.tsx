@@ -22,7 +22,7 @@ export function DesktopNav({ active }: DesktopNavProps) {
           href="/dashboard"
           className="text-lg font-semibold text-white transition hover:text-accent-cyan"
         >
-          MMO Match
+          MMOPLAYA
         </Link>
         <div className="flex items-center gap-1">
           {visibleLinks.map((link) => {

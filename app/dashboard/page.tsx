@@ -9,7 +9,7 @@ import { SwipeDeck } from "@/components/SwipeDeck";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Discover Matches | MMO Match",
+  title: "Discover Matches | MMOPLAYA",
   description: "Swipe through MMO players who share your schedule, language, and playstyle.",
 };
 

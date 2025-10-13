@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Deploy MMO Match to your VPS using rsync.
+Deploy MMOPLAYA to your VPS using rsync.
 
 ## Prerequisites
 
@@ -90,7 +90,7 @@ SMTP_HOST="smtp.example.com"
 SMTP_PORT="587"
 SMTP_USER="user@example.com"
 SMTP_PASS="your-password"
-SMTP_FROM="MMO Match <noreply@example.com>"
+SMTP_FROM="MMOPLAYA <noreply@example.com>"
 
 # Optional
 OTP_EXPIRATION_MINUTES=10

@@ -34,7 +34,7 @@ function formatTimeAgo(date: Date): string {
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Your Matches | MMO Match",
+  title: "Your Matches | MMOPLAYA",
   description: "Review your mutual matches and jump straight into chat to coordinate raids.",
 };
 

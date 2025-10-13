@@ -1,9 +1,13 @@
 import crypto from "crypto";
+import { resolveAppBaseUrl } from "@/lib/url";
 import { transporter, SMTP_FROM } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 
 const OTP_EXPIRATION_MINUTES = Number(process.env.OTP_EXPIRATION_MINUTES ?? 10);
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+const APP_BASE_URL = resolveAppBaseUrl(
+  process.env.APP_URL,
+  "http://localhost:3000",
+);
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -63,10 +67,13 @@ export async function requestLoginOtp(email: string, redirect?: string) {
     },
   });
 
-  const redirectParam = redirect ? `&redirect=${encodeURIComponent(redirect)}` : "";
-  const loginLink = `${APP_URL}/auth/callback?email=${encodeURIComponent(
-    normalizedEmail
-  )}&code=${code}${redirectParam}`;
+  const loginUrl = new URL("/auth/callback", `${APP_BASE_URL}/`);
+  loginUrl.searchParams.set("email", normalizedEmail);
+  loginUrl.searchParams.set("code", code);
+  if (redirect) {
+    loginUrl.searchParams.set("redirect", redirect);
+  }
+  const loginLink = loginUrl.toString();
 
   // Check if SMTP is configured
   const isSmtpConfigured = process.env.SMTP_HOST && 
@@ -94,12 +101,12 @@ export async function requestLoginOtp(email: string, redirect?: string) {
     return;
   }
 
-  const textBody = `Your MMO Match login code is ${code}.\n\n` +
+  const textBody = `Your MMOPLAYA login code is ${code}.\n\n` +
     `You can also tap this magic link: ${loginLink}\n\n` +
     `This code expires in ${OTP_EXPIRATION_MINUTES} minutes.`;
 
   const htmlBody = `
-    <p>Your MMO Match login code is <strong>${code}</strong>.</p>
+    <p>Your MMOPLAYA login code is <strong>${code}</strong>.</p>
     <p><a href="${loginLink}">Tap here to sign in instantly.</a></p>
     <p>This code expires in ${OTP_EXPIRATION_MINUTES} minutes.</p>
   `;
@@ -108,7 +115,7 @@ export async function requestLoginOtp(email: string, redirect?: string) {
     await transporter.sendMail({
       from: SMTP_FROM,
       to: normalizedEmail,
-      subject: "Your MMO Match login link",
+      subject: "MMOPLAYA login code: " + code,
       text: textBody,
       html: htmlBody,
     });

@@ -145,7 +145,7 @@ async function createUser(email: string, name: string, extra?: Partial<Parameter
 }
 
 async function main() {
-  console.log('Seeding MMO Match sample data...');
+  console.log('Seeding MMOPLAYA sample data...');
 
   await seedPreferenceOptions(prisma);
 

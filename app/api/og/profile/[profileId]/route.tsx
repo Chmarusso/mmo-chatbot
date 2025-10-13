@@ -57,7 +57,7 @@ export async function GET(
           fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
-        <div style={{ fontSize: 36, opacity: 0.8 }}>MMO Match • Player Profile</div>
+        <div style={{ fontSize: 36, opacity: 0.8 }}>MMOPLAYA • Player Profile</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ fontSize: 72, fontWeight: 700 }}>{profile.name}</div>
           {profile.bio && (
@@ -77,7 +77,7 @@ export async function GET(
             {profile._count.guilds > 0 && <span>{profile._count.guilds} guilds</span>}
           </div>
         </div>
-        <div style={{ fontSize: 24, opacity: 0.75 }}>Squad up on MMO Match</div>
+        <div style={{ fontSize: 24, opacity: 0.75 }}>Squad up on MMOPLAYA</div>
       </div>
     ),
     {

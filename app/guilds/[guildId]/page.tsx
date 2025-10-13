@@ -21,13 +21,13 @@ export async function generateMetadata({ params }: GuildPageProps): Promise<Meta
 
   if (!guild) {
     return {
-      title: "Guild not found | MMO Match",
+      title: "Guild not found | MMOPLAYA",
     };
   }
 
   return {
-    title: `${guild.name} | MMO Match Guild`,
-    description: guild.description ?? "Manage your MMO Match guild members, chat, and invites.",
+    title: `${guild.name} | MMOPLAYA Guild`,
+    description: guild.description ?? "Manage your MMOPLAYA guild members, chat, and invites.",
   };
 }
 

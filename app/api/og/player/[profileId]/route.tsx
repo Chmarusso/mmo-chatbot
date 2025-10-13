@@ -38,7 +38,7 @@ export async function GET(
           fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
-        <div style={{ fontSize: 36, opacity: 0.8 }}>MMO Match Player Card</div>
+        <div style={{ fontSize: 36, opacity: 0.8 }}>MMOPLAYA Player Card</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ fontSize: 72, fontWeight: 700 }}>{profile.name}</div>
           <div style={{ fontSize: 28, opacity: 0.9 }}>{profile.user.email}</div>

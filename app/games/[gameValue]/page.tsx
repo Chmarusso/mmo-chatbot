@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: GamePageProps): Promise<Metad
 
   if (!game) {
     return {
-      title: "Game Not Found | MMO Match",
+      title: "Game Not Found | MMOPLAYA",
     };
   }
 
@@ -29,24 +29,24 @@ export async function generateMetadata({ params }: GamePageProps): Promise<Metad
   const ogImageUrl = `${baseUrl}/api/og/game/${dbGameValue}`;
 
   return {
-    title: `${game.label} | MMO Match`,
-    description: game.description || `Find players for ${game.label} on MMO Match`,
+    title: `${game.label} | MMOPLAYA`,
+    description: game.description || `Find players for ${game.label} on MMOPLAYA`,
     openGraph: {
-      title: `${game.label} | MMO Match`,
-      description: game.description || `Find players for ${game.label} on MMO Match`,
+      title: `${game.label} | MMOPLAYA`,
+      description: game.description || `Find players for ${game.label} on MMOPLAYA`,
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: `${game.label} on MMO Match`,
+          alt: `${game.label} on MMOPLAYA`,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${game.label} | MMO Match`,
-      description: game.description || `Find players for ${game.label} on MMO Match`,
+      title: `${game.label} | MMOPLAYA`,
+      description: game.description || `Find players for ${game.label} on MMOPLAYA`,
       images: [ogImageUrl],
     },
   };

@@ -44,7 +44,7 @@ export default function FeedbackPage() {
       <header className="space-y-2 lg:text-left">
         <h1 className="text-3xl font-semibold lg:text-4xl">Feedback</h1>
         <p className="text-sm text-gray-400 lg:text-base">
-          Found a bug or have an idea? Send it our way so we can improve MMO Match.
+          Found a bug or have an idea? Send it our way so we can improve MMOPLAYA.
         </p>
       </header>
       <div className="rounded-3xl border border-accent-purple/30 bg-surface/80 p-6 lg:p-10">

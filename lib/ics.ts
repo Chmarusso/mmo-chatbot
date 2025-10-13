@@ -19,7 +19,7 @@ export const buildSingleEventCalendar = (event: CalendarEventInput) => {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//MMO Match//Guild Events//EN",
+    "PRODID:-//MMOPLAYA//Guild Events//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `UID:${event.uid}`,

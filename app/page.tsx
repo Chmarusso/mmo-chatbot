@@ -28,7 +28,7 @@ interface HomePageProps {
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "MMO Match | Find Your Perfect Gaming Squad",
+  title: "MMOPLAYA | Find Your Perfect Gaming Squad",
   description: "Connect with gamers who share your games, language, playstyle, and schedule. Privacy-focused matchmaking with no ads or tracking.",
 };
 
@@ -266,7 +266,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             Ready to Find Your Squad?
           </h2>
           <p className="text-lg text-text-secondary">
-            Join thousands of gamers already squading up on MMO Match
+            Join thousands of gamers already squading up on MMOPLAYA
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <a

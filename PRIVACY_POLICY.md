@@ -1,8 +1,8 @@
-# MMO Match Privacy Policy
+# MMOPLAYA Privacy Policy
 
 _Last updated: 2024-06-06_
 
-We built MMO Match with privacy as a core feature. This policy explains what data we collect, why we collect it, and the limited circumstances under which we share it. If anything here is unclear, contact us at `privacy@mmo-match.gg`.
+We built MMOPLAYA with privacy as a core feature. This policy explains what data we collect, why we collect it, and the limited circumstances under which we share it. If anything here is unclear, contact us at `privacy@mmo-match.gg`.
 
 ## 1. Principles
 - **Collect only what we need.** We stick to the minimum data required to deliver matchmaking, messaging, and safety features.
@@ -46,7 +46,7 @@ All vendors commit contractually to use data solely to provide their service.
 Kid accounts are created and managed by guardians. We do not knowingly collect personal information from kids without explicit guardian oversight.
 
 ## 8. International transfers
-Data is stored in the region selected when deploying your MMO Match instance. If a provider moves data across borders, it must provide adequate safeguards (e.g., SCCs).
+Data is stored in the region selected when deploying your MMOPLAYA instance. If a provider moves data across borders, it must provide adequate safeguards (e.g., SCCs).
 
 ## 9. Changes
 We may update this policy to reflect new features. Major changes will be announced within the app and by email when possible.
@@ -54,4 +54,4 @@ We may update this policy to reflect new features. Major changes will be announc
 ## 10. Contact
 Privacy questions, deletion requests, or vulnerability reports: `privacy@mmo-match.gg`.
 
-By using MMO Match, you consent to this policy. We appreciate your trust and are committed to keeping your data safe.
+By using MMOPLAYA, you consent to this policy. We appreciate your trust and are committed to keeping your data safe.

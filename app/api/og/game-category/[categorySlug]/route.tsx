@@ -45,7 +45,7 @@ export async function GET(
           fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
-        <div style={{ fontSize: 36, opacity: 0.8 }}>MMO Match • Game Categories</div>
+        <div style={{ fontSize: 36, opacity: 0.8 }}>MMOPLAYA • Game Categories</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ fontSize: 72, fontWeight: 700 }}>{category.label}</div>
@@ -72,7 +72,7 @@ export async function GET(
           </div>
         </div>
 
-        <div style={{ fontSize: 24, opacity: 0.75 }}>Find your perfect match on MMO Match</div>
+        <div style={{ fontSize: 24, opacity: 0.75 }}>Find your perfect match on MMOPLAYA</div>
       </div>
     ),
     {

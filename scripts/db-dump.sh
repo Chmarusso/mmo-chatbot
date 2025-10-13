@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Database backup script for MMO Match
+# Database backup script for MMOPLAYA
 # Creates timestamped SQL dumps of the PostgreSQL database
 
 set -e

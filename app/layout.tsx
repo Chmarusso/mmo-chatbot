@@ -5,7 +5,7 @@ import { getOrCreateProfile } from "@/lib/profile";
 import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
-  title: "MMO Match",
+  title: "MMOPLAYA",
   description: "Find your next MMO fireteam with real-time matching and chat.",
   icons: {
     icon: "/favicon.ico",

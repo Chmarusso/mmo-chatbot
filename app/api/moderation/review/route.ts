@@ -70,7 +70,7 @@ async function runModeration(messages: { channel: string; content: string; creat
       "Content-Type": "application/json",
       Authorization: `Bearer ${OPENROUTER_KEY}`,
       "HTTP-Referer": APP_URL,
-      "X-Title": "MMO Match Moderation",
+      "X-Title": "MMOPLAYA Moderation",
     },
     body: JSON.stringify({
       model: OPENROUTER_MODEL,

@@ -21,15 +21,15 @@ export async function generateMetadata({ params }: ChatPageProps): Promise<Metad
   });
 
   if (!match) {
-    return { title: "Chat not found | MMO Match" };
+    return { title: "Chat not found | MMOPLAYA" };
   }
 
   const name1 = match.user1.name;
   const name2 = match.user2.name;
 
   return {
-    title: `${name1} & ${name2} | Chat | MMO Match`,
-    description: "Coordinate your next run with real-time MMO Match chat.",
+    title: `${name1} & ${name2} | Chat | MMOPLAYA`,
+    description: "Coordinate your next run with real-time MMOPLAYA chat.",
   };
 }
 

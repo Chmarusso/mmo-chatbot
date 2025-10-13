@@ -21,24 +21,24 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   if (!category) {
     return {
-      title: "Category Not Found | MMO Match",
+      title: "Category Not Found | MMOPLAYA",
     };
   }
 
   const ogImageUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/og/game-category/${categorySlug}`;
 
   return {
-    title: `${category.label} Games | MMO Match`,
-    description: category.description || `Browse all ${category.label} games on MMO Match`,
+    title: `${category.label} Games | MMOPLAYA`,
+    description: category.description || `Browse all ${category.label} games on MMOPLAYA`,
     openGraph: {
-      title: `${category.label} Games | MMO Match`,
-      description: category.description || `Browse all ${category.label} games on MMO Match`,
+      title: `${category.label} Games | MMOPLAYA`,
+      description: category.description || `Browse all ${category.label} games on MMOPLAYA`,
       images: [{ url: ogImageUrl }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${category.label} Games | MMO Match`,
-      description: category.description || `Browse all ${category.label} games on MMO Match`,
+      title: `${category.label} Games | MMOPLAYA`,
+      description: category.description || `Browse all ${category.label} games on MMOPLAYA`,
       images: [ogImageUrl],
     },
   };

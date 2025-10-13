@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Use | MMO Match",
-  description: "Review the placeholder terms of use for the MMO Match application.",
+  title: "Terms of Use | MMOPLAYA",
+  description: "Review the placeholder terms of use for the MMOPLAYA application.",
 };
 
 export default function TermsOfUsePage() {

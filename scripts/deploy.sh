@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Deployment script for MMO Match
+# Deployment script for MMOPLAYA
 # Syncs files to VPS using rsync
 
 set -e
@@ -19,7 +19,7 @@ VPS_PATH="/home/deploy/mmoplaya-app"
 VPS_PORT="22"
 
 echo -e "${BLUE}=====================================${NC}"
-echo -e "${BLUE}   MMO Match Deployment Script${NC}"
+echo -e "${BLUE}   MMOPLAYA Deployment Script${NC}"
 echo -e "${BLUE}=====================================${NC}"
 echo ""
 
