@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { AuthForm } from "@/components/AuthForm";
 import { cookies } from "next/headers";
 import { trackReferralVisit } from "@/lib/referral";
 import {
@@ -79,6 +78,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <p className="text-lg text-text-secondary lg:text-xl max-w-2xl">
                   Connect with gamers who play the same games, speak your language, match your playstyle, and are online when you are.
                 </p>
+                <h2 className="text-xl font-semibold text-white">
+                  Squad up on MMOPLAYA
+                </h2>
               </div>
 
               {/* Key Features Grid */}
@@ -122,23 +124,28 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </div>
             </div>
 
-            {/* Right Column - Auth Form */}
+            {/* Right Column - Login CTA */}
             <div className="w-full max-w-md justify-self-center lg:justify-self-end">
               <div className="space-y-6 rounded-3xl border border-accent-purple/30 bg-surface/80 p-8 lg:p-10">
-                {params?.error && (
-                  <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                    Something went wrong. Please request a new link.
-                  </p>
-                )}
                 <div className="space-y-3 text-center">
                   <h2 className="text-2xl font-bold text-white lg:text-3xl">
-                    Join the Squad
+                    Log in with a magic link
                   </h2>
                   <p className="text-sm text-text-secondary">
-                    Get a magic link via email. No passwords required.
+                    Already part of the MMOPLAYA community? Jump back in with a secure, passwordless email login.
                   </p>
                 </div>
-                <AuthForm redirectPath={redirectPath} />
+                <div className="space-y-3">
+                  <Link
+                    href={`/auth/login?redirect=${encodeURIComponent(redirectPath)}`}
+                    className="inline-flex w-full items-center justify-center rounded-full bg-accent-cyan px-6 py-3 text-sm font-semibold text-background transition hover:bg-accent-purple focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/70"
+                  >
+                    Go to login
+                  </Link>
+                  <p className="text-xs text-text-tertiary text-center">
+                    No account yet? Request access from your guild leader or explore our features below.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

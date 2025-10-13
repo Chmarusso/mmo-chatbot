@@ -5,6 +5,7 @@ import { ExternalLink, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
 import RatingSection from "@/components/RatingSection";
 import GameComments from "@/components/GameComments";
 
@@ -206,11 +207,12 @@ export default async function GamePage({ params }: GamePageProps) {
                 <article className="flex items-center gap-3 rounded-3xl border border-accent-purple/20 bg-surface/80 p-4 transition hover:border-accent-purple/40">
                   <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full">
                     <Image
-                      src={profile.avatarUrl || "/avatar-placeholder.svg"}
+                      src={resolveAvatarUrl(profile.avatarUrl)}
                       alt={profile.name}
                       fill
                       className="object-cover"
                       sizes="48px"
+                      unoptimized={isPlaceholderAvatar(profile.avatarUrl)}
                     />
                   </div>
                   <div className="min-w-0 flex-1">

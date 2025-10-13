@@ -138,7 +138,7 @@ async function shouldSkipExpAward(
     case 'DAILY_LOGIN': {
       // Only award once per day
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const lastLogin = await prisma.expEvent.findFirst({
+      const lastLogin = await prisma.expEvent?.findFirst?.({
         where: {
           profileId,
           eventType: 'DAILY_LOGIN',
@@ -151,13 +151,13 @@ async function shouldSkipExpAward(
     case 'MESSAGE_SENT': {
       // Limit to 20 messages per day for EXP
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const messageCount = await prisma.expEvent.count({
+      const messageCount = await prisma.expEvent?.count?.({
         where: {
           profileId,
           eventType: 'MESSAGE_SENT',
           createdAt: { gte: today },
         },
-      });
+      }) ?? 0;
       return messageCount >= 20;
     }
 
@@ -166,7 +166,7 @@ async function shouldSkipExpAward(
     case 'PROFILE_COMPLETE':
     case 'FIRST_MATCH': {
       // Only award once ever
-      const existing = await prisma.expEvent.findFirst({
+      const existing = await prisma.expEvent?.findFirst?.({
         where: {
           profileId,
           eventType,

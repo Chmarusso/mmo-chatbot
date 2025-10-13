@@ -1,40 +1,42 @@
 # MMOPLAYA Terms of Use
 
-_Last updated: 2024-06-06_
+_Last updated: 2025-10-13_
 
-MMOPLAYA is built to help players find teammates in a respectful, privacy-minded environment. These Terms of Use explain the rules that apply when you access or use the service. By using MMOPLAYA, you agree to these terms.
+These Terms of Use (“Terms”) explain the rules that apply when you access or use MMOPLAYA. By browsing, creating an account, or interacting with other players, you agree to follow these Terms and any in-app policies we publish.
 
-## 1. Who may use MMOPLAYA
-- You must be at least 13 years old or have a verified guardian on your account.
-- Guardians are responsible for the activity of linked kid accounts and must review and approve matches before kids can chat or join guilds.
-- You promise that the information you provide is truthful and kept up to date.
+## 1. Eligibility & Accounts
+- You must be at least 13 years old to use MMOPLAYA. Younger players need a linked guardian account with verified consent.
+- You promise that the information you provide is accurate and kept up to date.
+- Guardians are responsible for any activity performed by accounts they supervise.
 
-## 2. Your responsibilities
-- Treat other players with respect. No spam, harassment, hate speech, or impersonation is permitted.
-- Only upload content (including avatar images) that you have permission to share and that does not violate the rights of others.
-- You are responsible for safeguarding your account access. Guard the email magic-link flow just as you would a password.
-- If you discover a security issue, please report it rather than attempting to exploit it.
+## 2. Community Guidelines
+- Treat other players with respect—no harassment, hate speech, impersonation, or bullying.
+- Do not spam, solicit, or use automated tools to interact with members of the community.
+- Respect personal boundaries and only share contact details you are comfortable making public.
 
-## 3. Acceptable use
-- Do not use MMOPLAYA for commercial solicitation, data harvesting, automated scraping, or any other activity that disrupts service for other users.
-- Location-based badges are intended for legitimate visits to real-world locations. Be respectful of private property and local regulations.
-- Guardian tools must only be used for the accounts you are authorized to supervise.
+## 3. Content You Share
+- You retain ownership of all text, images, and other content you upload.
+- You grant MMOPLAYA a non-exclusive license to host, display, and distribute that content solely to operate and improve the service.
+- Only post material you have the right to share. We may remove content or suspend accounts that violate these Terms or applicable law.
 
-## 4. Content and licensing
-- You retain ownership of the content you submit. You grant MMOPLAYA a non-exclusive license to display and distribute that content solely for operating the service.
-- We may remove content or suspend accounts that violate these Terms of Use or community guidelines.
+## 4. Safety & Acceptable Use
+- Keep your device and email secure—our passwordless login links should be treated like a password.
+- Do not reverse engineer, scrape, or otherwise misuse our systems or data.
+- Use location-based features responsibly and comply with local laws when meeting up or attending events.
 
-## 5. Privacy and data
-- Our [Privacy Policy](./PRIVACY_POLICY.md) describes how we handle your data. We minimize the information we collect and support self-service export and deletion.
-- We do not sell personal data. Analytics are aggregated and pseudonymized where possible.
+## 5. Privacy
+- Our [Privacy Policy](./PRIVACY_POLICY.md) explains the data we collect, why we use it, and the choices you have. We minimize tracking, support self-service data export, and honor deletion requests.
+- We may work with trusted partners (for example, email delivery or moderation tools) who process limited data on our behalf under strict agreements.
 
-## 6. Third-party services
-- Email delivery, payment processing for guild creation codes, and LLM moderation are powered by trusted third parties. Each provider is bound by agreements that limit their use of your data.
+## 6. Ending or Changing Access
+- We may suspend or terminate accounts that break these Terms or put the community at risk.
+- You may delete your account anytime from the in-app settings and request a copy of your data before leaving.
 
-## 7. Changes
-- We may update these Terms of Use to reflect new features or legal requirements. If changes are material, we will notify you through the app or via email.
+## 7. Service Changes & Disclaimers
+- MMOPLAYA is provided on an “as is” and “as available” basis. We may update features, change eligibility requirements, or revise these Terms as the service evolves.
+- If changes are material, we will notify you in-app or via email. Continued use after the changes take effect means you accept the updated Terms.
 
 ## 8. Contact
-Questions about these terms? Email `legal@mmo-match.gg` and we’ll get back to you.
+Questions about these Terms? Email `artur@mmoplaya.net` and we’ll be happy to help.
 
 Thank you for being part of the MMOPLAYA community and helping us keep it welcoming for everyone.

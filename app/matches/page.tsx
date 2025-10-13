@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile, serializeProfile } from "@/lib/profile";
-
-const PLACEHOLDER = "/avatar-placeholder.svg";
+import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
+import { cn } from "@/lib/utils";
 
 function formatTimeAgo(date: Date): string {
   const now = new Date();
@@ -62,6 +62,30 @@ export default async function MatchesPage() {
     .map((match) => {
       const other = match.user1Id === profile.id ? match.user2 : match.user1;
       const lastMessage = match.messages[0];
+      const isUser1 = match.user1Id === profile.id;
+      const lastViewedAt = isUser1 ? match.user1LastViewedAt : match.user2LastViewedAt;
+      const latestMessage = match.messages[0];
+
+      const hasUnread = (() => {
+        if (match.status !== "ACTIVE") {
+          return match.status === "PENDING";
+        }
+
+        if (!latestMessage) {
+          return true;
+        }
+
+        if (latestMessage.senderId === profile.id) {
+          return false;
+        }
+
+        if (!lastViewedAt) {
+          return true;
+        }
+
+        return latestMessage.createdAt > lastViewedAt;
+      })();
+
       return {
         id: match.id,
         status: match.status,
@@ -69,6 +93,7 @@ export default async function MatchesPage() {
         otherProfile: serializeProfile(other, other.user),
         lastMessage: lastMessage?.content || null,
         lastMessageTime: lastMessage?.createdAt || match.createdAt,
+        hasUnread,
       };
     })
     .sort((a, b) => {
@@ -94,26 +119,38 @@ export default async function MatchesPage() {
             </p>
           </div>
         )}
-        {formatted.map(({ id, otherProfile, status, requiresGuardianApproval, lastMessage, lastMessageTime }) => (
+        {formatted.map(({ id, otherProfile, status, requiresGuardianApproval, lastMessage, lastMessageTime, hasUnread }) => (
           <Link
             key={id}
             href={`/chat/${id}`}
-            className="flex items-center gap-4 rounded-3xl border border-accent-cyan/30 bg-surface/80 p-4 transition hover:border-accent-cyan/60 lg:gap-6 lg:p-6"
+            className={cn(
+              "relative flex items-center gap-4 rounded-3xl border bg-surface/80 p-4 transition lg:gap-6 lg:p-6",
+              hasUnread
+                ? "border-accent-cyan/70 bg-accent-cyan/10 shadow-[0_0_25px_rgba(8,185,255,0.2)]"
+                : "border-accent-cyan/30 hover:border-accent-cyan/60"
+            )}
           >
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-accent-cyan/40">
               <Image
-                src={otherProfile.avatarUrl || PLACEHOLDER}
+                src={resolveAvatarUrl(otherProfile.avatarUrl)}
                 alt={otherProfile.name}
                 width={56}
                 height={56}
                 className="h-full w-full object-cover"
-                unoptimized={!otherProfile.avatarUrl || otherProfile.avatarUrl === PLACEHOLDER}
+                unoptimized={isPlaceholderAvatar(otherProfile.avatarUrl)}
               />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-lg font-semibold">{otherProfile.name}</span>
+              <span className={cn("text-lg font-semibold", hasUnread && "text-white")}>
+                {otherProfile.name}
+              </span>
               {lastMessage ? (
-                <span className="truncate text-sm text-gray-400">
+                <span
+                  className={cn(
+                    "truncate text-sm",
+                    hasUnread ? "text-accent-cyan" : "text-gray-400"
+                  )}
+                >
                   {lastMessage}
                 </span>
               ) : (
@@ -124,7 +161,7 @@ export default async function MatchesPage() {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
               {lastMessageTime && (
-                <span className="text-gray-400">
+                <span className={cn("text-gray-400", hasUnread && "text-accent-cyan")}>
                   {formatTimeAgo(new Date(lastMessageTime))}
                 </span>
               )}
@@ -138,6 +175,9 @@ export default async function MatchesPage() {
                 </span>
               ) : null}
             </div>
+            {hasUnread && (
+              <span className="absolute -right-1.5 -top-1.5 h-3 w-3 rounded-full bg-accent-pink shadow-[0_0_10px_rgba(244,114,182,0.6)]" />
+            )}
           </Link>
         ))}
       </div>

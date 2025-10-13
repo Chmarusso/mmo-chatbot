@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { MessageSquare, Send } from "lucide-react";
+import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
 
 interface Comment {
   id: string;
@@ -163,11 +164,12 @@ export default function GameComments({ gameValue, isLoggedIn }: GameCommentsProp
               <div className="flex items-start gap-3">
                 <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full">
                   <Image
-                    src={comment.profile.avatarUrl || "/avatar-placeholder.svg"}
+                    src={resolveAvatarUrl(comment.profile.avatarUrl)}
                     alt={comment.profile.name}
                     fill
                     className="object-cover"
                     sizes="40px"
+                    unoptimized={isPlaceholderAvatar(comment.profile.avatarUrl)}
                   />
                 </div>
                 <div className="flex-1">

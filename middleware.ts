@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/constants";
 
-const PUBLIC_PATHS = ["/", "/auth/callback", "/games", "/privacy-policy", "/terms-of-use"];
+const PUBLIC_PATHS = ["/", "/auth/callback", "/auth/login", "/games", "/privacy-policy", "/terms-of-use"];
 
 export default function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -17,8 +17,10 @@ export default function middleware(req: NextRequest) {
 
   if (!hasSession && !isPublic) {
     const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = "/";
-    redirectUrl.searchParams.set("redirect", pathname);
+    const target = `${pathname}${req.nextUrl.search}`;
+    redirectUrl.pathname = "/auth/login";
+    redirectUrl.search = "";
+    redirectUrl.searchParams.set("redirect", target || "/dashboard");
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -26,6 +28,29 @@ export default function middleware(req: NextRequest) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.searchParams.delete("redirect");
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (hasSession && pathname === "/auth/login") {
+    const fallbackPath = "/dashboard";
+    const redirectParam = req.nextUrl.searchParams.get("redirect");
+    let targetPath = fallbackPath;
+    let targetSearch = "";
+
+    if (redirectParam && redirectParam.startsWith("/")) {
+      try {
+        const parsed = new URL(redirectParam, req.nextUrl.origin);
+        targetPath = parsed.pathname === "/" ? fallbackPath : parsed.pathname;
+        targetSearch = parsed.search;
+      } catch {
+        targetPath = fallbackPath;
+        targetSearch = "";
+      }
+    }
+
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = targetPath;
+    redirectUrl.search = targetSearch;
     return NextResponse.redirect(redirectUrl);
   }
 

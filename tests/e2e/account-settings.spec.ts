@@ -24,7 +24,7 @@ test.describe('Account settings flows', () => {
     await expect(page).toHaveURL(new RegExp(`${APP_URL}/?$`));
 
     await page.goto(`${APP_URL}/dashboard`);
-    await expect(page).toHaveURL(new RegExp(`${APP_URL}/auth`));
+    await expect(page).toHaveURL(new RegExp(`${APP_URL}/auth/login`));
 
     await cleanupUser(email);
   });

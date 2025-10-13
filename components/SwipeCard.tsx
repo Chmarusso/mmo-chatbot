@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types/profile";
 import { preferenceLabel, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
 import { cn } from "@/lib/utils";
-
-const PLACEHOLDER = "/avatar-placeholder.svg";
+import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
 
 interface SwipeCardProps {
   profile: Profile;
@@ -56,13 +55,13 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
           onDragStart={(event) => event.preventDefault()}
         >
           <Image
-            src={profile.avatarUrl || PLACEHOLDER}
+            src={resolveAvatarUrl(profile.avatarUrl)}
             alt={profile.name}
             width={160}
             height={160}
             className="h-full w-full object-cover"
             draggable={false}
-            unoptimized={!profile.avatarUrl || profile.avatarUrl === PLACEHOLDER}
+            unoptimized={isPlaceholderAvatar(profile.avatarUrl)}
           />
         </div>
         <div className="text-center">

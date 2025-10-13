@@ -19,7 +19,7 @@ body {
 }
 
 a {
-  @apply text-accent-cyan hover:text-accent-purple transition-colors;
+  @apply text-accent-cyan hover:text-white transition-colors;
 }
 
 button {
@@ -64,7 +64,7 @@ button {
 }
 
 .light a:hover {
-  color: rgb(168 85 247);
+  color: rgb(30 64 175);
 }
 
 /* Light mode navbar glow */

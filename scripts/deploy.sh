@@ -80,8 +80,12 @@ echo -e "${YELLOW}Step 3: Installing dependencies on VPS...${NC}"
 ssh ${VPS_HOST} << 'ENDSSH'
 cd /home/deploy/mmoplaya-app
 echo "Installing dependencies..."
-pnpm install --frozen-lockfile
+npm install
 echo "Dependencies installed."
+echo "Building..."
+npm run build
+echo "Building completed."
+pm2 restart mmoplaya-app
 ENDSSH
 
 echo ""

@@ -5,8 +5,7 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import type { Profile } from "@/types/profile";
 import { Button } from "@/components/ui/button";
-
-const PLACEHOLDER = "/avatar-placeholder.svg";
+import { resolveAvatarUrl, AVATAR_PLACEHOLDER } from "@/lib/avatar";
 
 interface AvatarUploaderProps {
   profile: Profile;
@@ -16,7 +15,7 @@ interface AvatarUploaderProps {
 export function AvatarUploader({ profile, onUpload }: AvatarUploaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(profile.avatarUrl ?? PLACEHOLDER);
+  const [previewUrl, setPreviewUrl] = useState(resolveAvatarUrl(profile.avatarUrl));
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -62,12 +61,12 @@ export function AvatarUploader({ profile, onUpload }: AvatarUploaderProps) {
     <div className="flex flex-col items-center gap-3 lg:gap-4">
       <div className="relative h-24 w-24 overflow-hidden rounded-full border border-accent-cyan/40 shadow-glow lg:h-32 lg:w-32">
         <Image
-          src={previewUrl || PLACEHOLDER}
+          src={previewUrl}
           alt={profile.name}
           width={128}
           height={128}
           className="h-full w-full object-cover"
-          unoptimized
+          unoptimized={previewUrl === AVATAR_PLACEHOLDER}
           key={previewUrl || 'placeholder'}
         />
       </div>

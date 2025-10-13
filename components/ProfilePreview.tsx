@@ -5,8 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types/profile";
 import { preferenceLabel, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
-
-const PLACEHOLDER = "/avatar-placeholder.svg";
+import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
 
 interface ProfilePreviewProps {
   profile: Profile;
@@ -18,12 +17,16 @@ export function ProfilePreview({ profile }: ProfilePreviewProps) {
       <div className="flex flex-col items-center gap-4 lg:gap-6">
         <div className="relative h-32 w-32 overflow-hidden rounded-full border border-accent-purple/40 shadow-glow-purple lg:h-40 lg:w-40">
           <Image
-            src={profile.avatarUrl ? `${profile.avatarUrl}?t=${Date.now()}` : PLACEHOLDER}
+            src={
+              isPlaceholderAvatar(profile.avatarUrl)
+                ? resolveAvatarUrl(profile.avatarUrl)
+                : `${profile.avatarUrl}?t=${Date.now()}`
+            }
             alt={profile.name}
             width={160}
             height={160}
             className="h-full w-full object-cover"
-            unoptimized
+            unoptimized={isPlaceholderAvatar(profile.avatarUrl)}
             key={profile.avatarUrl || 'placeholder'}
           />
         </div>

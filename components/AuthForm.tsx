@@ -147,11 +147,11 @@ export function AuthForm({ redirectPath }: AuthFormProps) {
           />
           <span>
             I agree to the
-            <Link href="/terms-of-use" className="mx-1 text-accent-cyan hover:text-accent-purple">
+            <Link href="/terms-of-use" className="mx-1 text-accent-cyan hover:text-white">
               Terms of Use
             </Link>
             and
-            <Link href="/privacy-policy" className="ml-1 text-accent-cyan hover:text-accent-purple">
+            <Link href="/privacy-policy" className="ml-1 text-accent-cyan hover:text-white">
               Privacy Policy
             </Link>
             .
