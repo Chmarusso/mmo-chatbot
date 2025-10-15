@@ -12,6 +12,13 @@ interface ProfilePreviewProps {
 }
 
 export function ProfilePreview({ profile }: ProfilePreviewProps) {
+  const timeSlots =
+    profile.timeSlots && profile.timeSlots.length > 0
+      ? profile.timeSlots
+      : profile.timeSlot
+      ? [profile.timeSlot]
+      : [];
+
   return (
     <div className="flex flex-col rounded-3xl border border-accent-cyan/20 bg-surface/90 p-6 shadow-glow lg:p-10">
       <div className="flex flex-col items-center gap-4 lg:gap-6">
@@ -50,11 +57,11 @@ export function ProfilePreview({ profile }: ProfilePreviewProps) {
               {preferenceLabel(profile.playstyle, PLAYSTYLES)}
             </Badge>
           )}
-          {profile.timeSlot && (
-            <Badge variant="timeslot">
-              {preferenceLabel(profile.timeSlot, TIME_SLOTS)}
+          {timeSlots.map((slot) => (
+            <Badge key={slot} variant="timeslot">
+              {preferenceLabel(slot, TIME_SLOTS)}
             </Badge>
-          )}
+          ))}
           {profile.language && (
             <Badge variant="language">
               {preferenceLabel(profile.language, LANGUAGES)}

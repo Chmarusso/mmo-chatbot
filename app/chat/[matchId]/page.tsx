@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile, serializeProfile } from "@/lib/profile";
 import { ChatRoom } from "@/components/ChatRoom";
@@ -36,6 +36,10 @@ export async function generateMetadata({ params }: ChatPageProps): Promise<Metad
 export default async function ChatPage({ params }: ChatPageProps) {
   const { matchId } = await params;
   const profile = await getOrCreateProfile();
+
+  if (!profile.inviteCode?.trim()) {
+    redirect("/profile?invite=required");
+  }
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },

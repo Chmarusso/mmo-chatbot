@@ -44,10 +44,13 @@ export interface Profile {
   twitterLink: string | null;
   redditLink: string | null;
   gamePref: GamePref | null;
+  gamePreferences: GamePref[];
   timeSlot: TimeSlot | null;
+  timeSlots: TimeSlot[];
   language: Language | null;
   playstyle: Playstyle | null;
   theme: string | null;
+  inviteCode: string | null;
   isVerified: boolean;
   isShadowbanned: boolean;
   isChild: boolean;

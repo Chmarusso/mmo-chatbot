@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { InviteActivationForm } from "@/components/InviteActivationForm";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile, serializeProfile } from "@/lib/profile";
 import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
@@ -41,6 +42,23 @@ export const metadata: Metadata = {
 export default async function MatchesPage() {
   const profile = await getOrCreateProfile();
 
+  if (!profile.inviteCode?.trim()) {
+    return (
+      <main className="flex-1 space-y-6 px-4 py-6 pb-24 sm:px-6 lg:mx-auto lg:max-w-3xl lg:space-y-10 lg:px-12 lg:py-12 lg:pb-12">
+        <div className="rounded-3xl border border-accent-purple/30 bg-surface/80 p-8 text-center shadow-glow">
+          <h1 className="text-2xl font-semibold">Invite required</h1>
+          <p className="mt-3 text-sm text-gray-400">
+            Matches unlock after you activate your invite. Enter the code that was shared with you and we&apos;ll open up the roster.
+          </p>
+          <InviteActivationForm
+            ctaLabel="Unlock matches"
+            onSuccessMessage="Invite accepted! Matches unlocked."
+          />
+        </div>
+      </main>
+    );
+  }
+
   const matches = await prisma.match.findMany({
     where: {
       OR: [{ user1Id: profile.id }, { user2Id: profile.id }],
@@ -51,6 +69,23 @@ export default async function MatchesPage() {
       messages: { orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
+
+  const otherProfileIds = Array.from(new Set(matches.map((match) => (match.user1Id === profile.id ? match.user2Id : match.user1Id))));
+
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+  const recentSenders = otherProfileIds.length
+    ? await prisma.message.groupBy({
+        by: ["senderId"],
+        where: {
+          senderId: { in: otherProfileIds },
+          createdAt: { gte: fiveMinutesAgo },
+        },
+        _count: { _all: true },
+      })
+    : [];
+
+  const onlineSet = new Set(recentSenders.map((entry) => entry.senderId));
 
   const formatted = matches
     .filter((match) => {
@@ -94,6 +129,7 @@ export default async function MatchesPage() {
         lastMessage: lastMessage?.content || null,
         lastMessageTime: lastMessage?.createdAt || match.createdAt,
         hasUnread,
+        isOnline: onlineSet.has(other.id),
       };
     })
     .sort((a, b) => {
@@ -119,7 +155,7 @@ export default async function MatchesPage() {
             </p>
           </div>
         )}
-        {formatted.map(({ id, otherProfile, status, requiresGuardianApproval, lastMessage, lastMessageTime, hasUnread }) => (
+        {formatted.map(({ id, otherProfile, status, requiresGuardianApproval, lastMessage, lastMessageTime, hasUnread, isOnline }) => (
           <Link
             key={id}
             href={`/chat/${id}`}
@@ -141,9 +177,17 @@ export default async function MatchesPage() {
               />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
-              <span className={cn("text-lg font-semibold", hasUnread && "text-white")}>
-                {otherProfile.name}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={cn("text-lg font-semibold", hasUnread && "text-white")}>
+                  {otherProfile.name}
+                </span>
+                {isOnline && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden />
+                    Online
+                  </span>
+                )}
+              </div>
               {lastMessage ? (
                 <span
                   className={cn(

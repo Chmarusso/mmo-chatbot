@@ -66,11 +66,17 @@ describe('matching flow API', () => {
       id: 'profileA',
       isChild: false,
       guardianProfileId: null,
+      inviteCode: 'INVITE-TEST',
+      gamePreferences: [],
+      timeSlots: [],
     });
     profileFindUnique.mockResolvedValue({
       id: 'profileB',
       isChild: false,
       guardianProfileId: null,
+      inviteCode: 'INVITE-TEST',
+      gamePreferences: [],
+      timeSlots: [],
     });
     swipeUpsert.mockResolvedValue({});
     swipeFindUnique.mockResolvedValue({ direction: 'YES' });
@@ -109,11 +115,17 @@ describe('matching flow API', () => {
       id: 'profileA',
       isChild: false,
       guardianProfileId: null,
+      inviteCode: 'INVITE-TEST',
+      gamePreferences: [],
+      timeSlots: [],
     });
     profileFindUnique.mockResolvedValue({
       id: 'profileB',
       isChild: false,
       guardianProfileId: null,
+      inviteCode: 'INVITE-TEST',
+      gamePreferences: [],
+      timeSlots: [],
     });
     swipeUpsert.mockResolvedValue({});
     swipeFindUnique.mockResolvedValue({ direction: 'NO' });
@@ -143,6 +155,9 @@ describe('conversation API', () => {
       id: 'profileA',
       isChild: false,
       guardianProfileId: null,
+      inviteCode: 'INVITE-TEST',
+      gamePreferences: [],
+      timeSlots: [],
     });
     matchFindUnique.mockResolvedValue({
       id: 'match123',
@@ -166,7 +181,7 @@ describe('conversation API', () => {
 
     const response = await messagesGet(
       new Request('http://localhost/api/messages/match123'),
-      { params: { matchId: 'match123' } }
+      { params: Promise.resolve({ matchId: 'match123' }) }
     );
 
     const payload = (await response.json()) as { messages: Array<Record<string, unknown>> };
@@ -185,6 +200,9 @@ describe('conversation API', () => {
       id: 'profileA',
       isChild: false,
       guardianProfileId: null,
+      inviteCode: 'INVITE-TEST',
+      gamePreferences: [],
+      timeSlots: [],
     });
     matchFindUnique.mockResolvedValue({
       id: 'match123',
@@ -205,7 +223,7 @@ describe('conversation API', () => {
 
     const response = await messagesPost(
       buildRequest('/api/messages/match123', { content: 'See you in the dungeon!' }),
-      { params: { matchId: 'match123' } }
+      { params: Promise.resolve({ matchId: 'match123' }) }
     );
 
     const payload = (await response.json()) as { message: Record<string, unknown> };

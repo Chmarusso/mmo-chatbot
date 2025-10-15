@@ -16,10 +16,16 @@ export const serializeProfile = (profile: PrismaProfile, user: User): Profile =>
   twitterLink: profile.twitterLink ?? null,
   redditLink: profile.redditLink ?? null,
   gamePref: (profile.gamePref ?? null) as Profile["gamePref"],
+  gamePreferences:
+    ((profile as PrismaProfile & { gamePreferences?: string[] }).gamePreferences ??
+      []) as Profile["gamePreferences"],
   timeSlot: (profile.timeSlot ?? null) as Profile["timeSlot"],
+  timeSlots:
+    ((profile as PrismaProfile & { timeSlots?: string[] }).timeSlots ?? []) as Profile["timeSlots"],
   language: (profile.language ?? null) as Profile["language"],
   playstyle: (profile.playstyle ?? null) as Profile["playstyle"],
   theme: profile.theme ?? null,
+  inviteCode: (profile as PrismaProfile & { inviteCode?: string | null }).inviteCode ?? null,
   notifyOnNewMatch: Boolean((profile as PrismaProfile & { notifyOnNewMatch?: boolean }).notifyOnNewMatch ?? true),
   notifyOnNewMessage: Boolean((profile as PrismaProfile & { notifyOnNewMessage?: boolean }).notifyOnNewMessage ?? true),
   notifyOnAnnouncements: Boolean(

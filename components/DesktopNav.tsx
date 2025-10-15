@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import mmoplayaLogo from "@/public/mmoplaya-logo.png";
 import { APP_LINKS } from "@/components/MobileNav";
 import { cn } from "@/lib/utils";
 import { useMatchBadge } from "@/components/MatchBadgeProvider";
@@ -12,17 +14,23 @@ interface DesktopNavProps {
 
 export function DesktopNav({ active }: DesktopNavProps) {
   const pathname = usePathname();
-  const visibleLinks = APP_LINKS.filter((link) => !link.hidden);
   const { unreadMatches } = useMatchBadge();
+  const visibleLinks = APP_LINKS.filter((link) => !link.hidden);
 
   return (
     <nav className="sticky top-0 z-30 hidden border-b border-accent-cyan/20 bg-background/80 backdrop-blur lg:block">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-8 py-5">
         <Link
           href="/dashboard"
-          className="text-lg font-semibold text-white transition hover:text-accent-cyan"
+          aria-label="MMOPLAYA home"
+          className="flex items-center transition hover:opacity-90"
         >
-          MMOPLAYA
+          <Image
+            src={mmoplayaLogo}
+            alt="MMOPLAYA logo"
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
         <div className="flex items-center gap-1">
           {visibleLinks.map((link) => {

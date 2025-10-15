@@ -27,6 +27,12 @@ export default async function DashboardPage() {
   let candidates: Profile[] = [];
 
   const hasPreferences = profile.gamePref && profile.language;
+  const userTimeSlots =
+    profile.timeSlots && profile.timeSlots.length > 0
+      ? profile.timeSlots
+      : profile.timeSlot
+      ? [profile.timeSlot]
+      : [];
 
   if (hasPreferences) {
     const preferenceWhere: Prisma.ProfileWhereInput = {
@@ -43,9 +49,25 @@ export default async function DashboardPage() {
       take: 50,
     });
 
-    candidates = potentialProfiles
+    const serialized = potentialProfiles
       .filter((candidate) => !excludeIds.has(candidate.id))
       .map((candidate) => serializeProfile(candidate, candidate.user));
+
+    const matchesTimeSlot = (candidate: Profile) => {
+      if (userTimeSlots.length === 0) {
+        return true;
+      }
+      const candidateSlots =
+        candidate.timeSlots && candidate.timeSlots.length > 0
+          ? candidate.timeSlots
+          : candidate.timeSlot
+          ? [candidate.timeSlot]
+          : [];
+
+      return candidateSlots.some((slot) => userTimeSlots.includes(slot));
+    };
+
+    candidates = serialized.filter(matchesTimeSlot);
   }
 
   return (

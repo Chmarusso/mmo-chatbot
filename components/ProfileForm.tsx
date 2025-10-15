@@ -32,6 +32,7 @@ type FormState = {
   bio: string;
   gamePref: string;
   timeSlot: string;
+  timeSlots: string[];
   language: string;
   playstyle: string;
   notifyOnNewMatch: boolean;
@@ -42,11 +43,21 @@ type FormState = {
 const STEP_COUNT = 3;
 
 export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
+  const initialTimeSlots = Array.from(
+    new Set(
+      profile.timeSlots && profile.timeSlots.length > 0
+        ? profile.timeSlots
+        : profile.timeSlot
+        ? [profile.timeSlot]
+        : []
+    )
+  );
   const [formState, setFormState] = useState<FormState>({
     name: profile.name ?? "",
     bio: profile.bio ?? "",
     gamePref: profile.gamePref ?? "",
-    timeSlot: profile.timeSlot ?? "",
+    timeSlot: initialTimeSlots[0] ?? "",
+    timeSlots: initialTimeSlots,
     language: profile.language ?? "",
     playstyle: profile.playstyle ?? "",
     notifyOnNewMatch: profile.notifyOnNewMatch ?? true,
@@ -117,6 +128,20 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const toggleTimeSlot = (value: string) => {
+    setFormState((prev) => {
+      const exists = prev.timeSlots.includes(value);
+      const nextTimeSlots = exists
+        ? prev.timeSlots.filter((slot) => slot !== value)
+        : [...prev.timeSlots, value];
+      return {
+        ...prev,
+        timeSlots: nextTimeSlots,
+        timeSlot: nextTimeSlots[0] ?? "",
+      };
+    });
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -125,8 +150,8 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
         toast.error("Pick your MMO and playstyle to continue.");
         return;
       }
-      if (step === 1 && (!formState.timeSlot || !formState.language)) {
-        toast.error("Select your preferred time slot and language.");
+      if (step === 1 && (formState.timeSlots.length === 0 || !formState.language)) {
+        toast.error("Select at least one time slot and language.");
         return;
       }
       setStep((prev) => Math.min(prev + 1, STEP_COUNT - 1));
@@ -152,6 +177,7 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
           bio: formState.bio.trim() || null,
           gamePref: formState.gamePref || null,
           timeSlot: formState.timeSlot || null,
+          timeSlots: formState.timeSlots,
           language: formState.language || null,
           playstyle: formState.playstyle || null,
           avatarUrl,
@@ -170,8 +196,20 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
       }
 
       toast.success("Profile saved!");
+
+      const updated = data.profile;
+      setFormState((prev) => ({
+        ...prev,
+        name: updated.name ?? "",
+        bio: updated.bio ?? "",
+        gamePref: updated.gamePref ?? "",
+        timeSlot: updated.timeSlot ?? "",
+        timeSlots: updated.timeSlots ?? [],
+        language: updated.language ?? "",
+        playstyle: updated.playstyle ?? "",
+      }));
       if (onUpdated) {
-        onUpdated(data.profile);
+        onUpdated(updated);
       }
     } catch (error) {
       console.error(error);
@@ -268,28 +306,36 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
 
       {step === 1 && (
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <Label>Time Slot</Label>
+              <Label>Time Slots</Label>
               {timeZoneLabel && (
                 <span className="text-xs text-gray-500">Your timezone: {timeZoneLabel}</span>
               )}
             </div>
-            <Select
-              value={formState.timeSlot || undefined}
-              onValueChange={(value) => handleChange("timeSlot", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select hours" />
-              </SelectTrigger>
-              <SelectContent>
-                {TIME_SLOTS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {TIME_SLOTS.map((option) => {
+                const isSelected = formState.timeSlots.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleTimeSlot(option.value)}
+                    className={cn(
+                      "rounded-2xl border px-4 py-3 text-left text-xs font-medium transition",
+                      isSelected
+                        ? "border-accent-cyan bg-accent-cyan/15 text-accent-cyan shadow-glow"
+                        : "border-accent-purple/20 bg-background/60 text-gray-200 hover:border-accent-cyan/40 hover:text-white"
+                    )}
+                  >
                     {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-500">
+              Pick every window that usually works for you. We’ll use your first selection as the primary match slot.
+            </p>
           </div>
 
           <div className="space-y-2">

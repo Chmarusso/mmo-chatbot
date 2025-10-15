@@ -9,6 +9,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
+  }
+
   const { swipedId, direction } = await request.json();
 
   if (typeof swipedId !== "string" || !["yes", "no"].includes(direction)) {
@@ -115,6 +119,10 @@ export async function DELETE(request: Request) {
 
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
   }
 
   const url = new URL(request.url);

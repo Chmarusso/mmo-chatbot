@@ -22,6 +22,10 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
+  }
+
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
@@ -96,6 +100,10 @@ export async function POST(
 
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
   }
 
   const match = await prisma.match.findUnique({

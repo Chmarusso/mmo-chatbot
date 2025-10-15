@@ -5,8 +5,11 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
 ## Features
 - Passwordless login flow that emails (or logs) six-digit OTP codes and magic links.
 - Guided profile builder with avatar uploads, MMO preference enums, social links, timezone hints, and locale-aware language defaults.
+- Multi-slot scheduling so players can advertise every window they’re usually online.
 - Swipe deck that filters candidates by shared MMO and language, with instant toast on mutual matches.
 - Matches list and polling chat room so new messages appear without a page refresh.
+- Personal AI companion that helps plan raids, builds, and play schedules using LLM responses.
+- Invite-gated matches and companion experiences that unlock once a profile supplies a valid invite code.
 - Dark/light theme support with system default preference saved to user profile.
 - Games directory with individual game pages featuring screenshots, descriptions, official website links, star ratings, community comments, and player listings.
 - Settings page with sign-out and full account deletion that cascades through matches, swipes, and messages.
@@ -58,7 +61,8 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
    MODERATION_SECRET="super-secret"      # required for moderation endpoints
    OPENROUTER_API_KEY="sk-or-..."         # required for LLM-based moderation
    MODERATION_MODEL="openrouter/auto"     # optional override
-   ```
+   COMPANION_MODEL="anthropic/claude-3.5-haiku"  # optional override for the AI companion
+  ```
    - If SMTP is omitted, OTP codes and magic links are printed to the server logs for local testing.
    - Use port `465` for implicit TLS; the mailer auto-selects secure mode.
 

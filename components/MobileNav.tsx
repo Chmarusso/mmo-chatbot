@@ -2,17 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Joystick, UserCircle, Settings, Shield, Gamepad2 } from "lucide-react";
+import { Users, Joystick, UserCircle, Shield, Gamepad2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMatchBadge } from "@/components/MatchBadgeProvider";
 
-export const APP_LINKS = [
+type AppLink = {
+  href: string;
+  label: string;
+  icon: typeof Users;
+  hidden?: boolean;
+  requiresInvite?: boolean;
+};
+
+export const APP_LINKS: AppLink[] = [
   { href: "/dashboard", label: "Discover", icon: Joystick },
-  { href: "/matches", label: "Matches", icon: Users },
+  { href: "/matches", label: "Matches", icon: Users, requiresInvite: true },
   { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/companion", label: "Companion", icon: Sparkles, requiresInvite: true },
   { href: "/guilds", label: "Guilds", icon: Shield, hidden: true },
   { href: "/profile", label: "Profile", icon: UserCircle },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 interface MobileNavProps {
@@ -21,15 +29,16 @@ interface MobileNavProps {
 
 export function MobileNav({ active }: MobileNavProps) {
   const pathname = usePathname();
+  const { unreadMatches } = useMatchBadge();
+
   const visibleLinks = APP_LINKS.filter((link) => !link.hidden);
   const columnClass =
     {
       3: "grid-cols-3",
       4: "grid-cols-4",
       5: "grid-cols-5",
-    }[visibleLinks.length] ?? "grid-cols-5";
-
-  const { unreadMatches } = useMatchBadge();
+      6: "grid-cols-6",
+    }[visibleLinks.length] ?? "grid-cols-6";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto w-full max-w-3xl rounded-t-3xl border border-accent-cyan/20 bg-surface/90 backdrop-blur lg:hidden">

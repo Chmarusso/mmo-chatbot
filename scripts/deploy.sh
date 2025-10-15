@@ -25,7 +25,7 @@ echo ""
 
 # Test SSH connection
 echo -e "${YELLOW}Testing SSH connection to ${VPS_HOST}...${NC}"
-if ! ssh -q -o BatchMode=yes -o ConnectTimeout=5 ${VPS_HOST} exit; then
+if ! ssh -q -o BatchMode=yes -o ConnectTimeout=5 ${VPS_USER}@${VPS_HOST} exit; then
   echo -e "${RED}Error: Cannot connect to ${VPS_HOST}${NC}"
   echo "Make sure 'apifullstak' is configured in your ~/.ssh/config"
   exit 1
@@ -62,8 +62,8 @@ rsync -avz --progress \
   --exclude 'test-results' \
   --exclude 'playwright-report' \
   --exclude '.claude' \
-  -e "ssh" \
-  ./ ${VPS_HOST}:${VPS_PATH}/
+  -e "ssh -p ${VPS_PORT}" \
+  ./ ${VPS_USER}@${VPS_HOST}:${VPS_PATH}/
 
 if [ $? -eq 0 ]; then
   echo ""
@@ -77,15 +77,51 @@ fi
 echo ""
 echo -e "${YELLOW}Step 3: Installing dependencies on VPS...${NC}"
 
-ssh ${VPS_HOST} << 'ENDSSH'
+ssh -T -p "${VPS_PORT}" ${VPS_USER}@${VPS_HOST} <<'ENDSSH'
+set -e
 cd /home/deploy/mmoplaya-app
-echo "Installing dependencies..."
-npm install
-echo "Dependencies installed."
-echo "Building..."
-npm run build
-echo "Building completed."
-pm2 restart mmoplaya-app
+
+# Load user environment so nvm/pnpm are available for non-login sessions
+if [ -f "$HOME/.bash_profile" ]; then
+  . "$HOME/.bash_profile"
+elif [ -f "$HOME/.profile" ]; then
+  . "$HOME/.profile"
+elif [ -f "$HOME/.bashrc" ]; then
+  . "$HOME/.bashrc"
+fi
+
+# Ensure nvm (if installed) exports node/npm
+if [ -f "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
+PACKAGE_MANAGER=""
+INSTALL_CMD=""
+BUILD_CMD=""
+
+if command -v pnpm >/dev/null 2>&1; then
+  PACKAGE_MANAGER="pnpm"
+  INSTALL_CMD="pnpm install --frozen-lockfile --prod"
+  BUILD_CMD="pnpm build"
+elif command -v npm >/dev/null 2>&1; then
+  PACKAGE_MANAGER="npm"
+  INSTALL_CMD="npm ci --omit=dev"
+  BUILD_CMD="npm run build"
+else
+  echo "Error: Neither pnpm nor npm is available on the remote host."
+  exit 1
+fi
+
+echo "-> $(date '+%Y-%m-%d %H:%M:%S') Using ${PACKAGE_MANAGER} to install production dependencies..."
+eval "${INSTALL_CMD}"
+
+echo "-> $(date '+%Y-%m-%d %H:%M:%S') Building production bundle on VPS..."
+eval "${BUILD_CMD}"
+
+echo "-> $(date '+%Y-%m-%d %H:%M:%S') Restarting PM2 process..."
+pm2 reload mmoplaya-app || pm2 restart mmoplaya-app
+
+echo "-> $(date '+%Y-%m-%d %H:%M:%S') Deployment tasks completed."
 ENDSSH
 
 echo ""
@@ -94,8 +130,8 @@ echo -e "${GREEN}   Deployment completed!${NC}"
 echo -e "${GREEN}=====================================${NC}"
 echo ""
 echo -e "${YELLOW}Next steps on VPS:${NC}"
-echo "  1. Set up .env file with production values"
-echo "  2. Run database migrations: pnpm prisma migrate deploy"
-echo "  3. Seed the database: pnpm db:seed"
-echo "  4. Start the application: pnpm start"
+echo "  1. Ensure the .env file is updated with production values"
+echo "  2. Run database migrations: npx prisma migrate deploy"
+echo "  3. Seed the database if needed: npm run db:seed"
+echo "  4. Confirm PM2 status: pm2 status mmoplaya-app"
 echo ""

@@ -11,6 +11,10 @@ export async function GET() {
     return NextResponse.json({ unreadMatches: 0 }, { status: 200 });
   }
 
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ unreadMatches: 0, matches: [], requiresInvite: true }, { status: 200 });
+  }
+
   const matches = await prisma.match.findMany({
     where: {
       OR: [{ user1Id: profile.id }, { user2Id: profile.id }],

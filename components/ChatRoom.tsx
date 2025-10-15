@@ -205,8 +205,12 @@ export function ChatRoom({
             {otherProfile.playstyle && (
               <Badge variant="playstyle">{preferenceLabel(otherProfile.playstyle, PLAYSTYLES)}</Badge>
             )}
-            {otherProfile.timeSlot && (
-              <Badge variant="timeslot">{preferenceLabel(otherProfile.timeSlot, TIME_SLOTS)}</Badge>
+            {(otherProfile.timeSlots?.length ? otherProfile.timeSlots : otherProfile.timeSlot ? [otherProfile.timeSlot] : []).map(
+              (slot) => (
+                <Badge key={slot} variant="timeslot">
+                  {preferenceLabel(slot, TIME_SLOTS)}
+                </Badge>
+              )
             )}
             {otherProfile.language && (
               <Badge variant="language">{preferenceLabel(otherProfile.language, LANGUAGES)}</Badge>

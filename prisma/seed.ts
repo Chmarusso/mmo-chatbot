@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { generateBadgeQrSecret } from '@/lib/qr/badge';
+import { generateInviteCode, normalizeInviteCode } from '@/lib/invite';
 import {
   seedPreferenceOptions,
   GAME_ENTRIES,
@@ -118,30 +119,125 @@ async function seedRandomPlayers(count: number) {
   }
 }
 
-async function createUser(email: string, name: string, extra?: Partial<Parameters<typeof prisma.profile.create>[0]['data']>) {
-  return prisma.user.upsert({
-    where: { email },
-    update: {
-      profile: {
+async function createUser(
+  email: string,
+  name: string,
+  extra?: Partial<Parameters<typeof prisma.profile.create>[0]["data"]>
+) {
+  const baseExtra: Record<string, unknown> = { ...(extra ?? {}) };
+  const primaryGamePref = typeof baseExtra.gamePref === "string" ? baseExtra.gamePref : undefined;
+  const primaryTimeSlot = typeof baseExtra.timeSlot === "string" ? baseExtra.timeSlot : undefined;
+  const inviteCode =
+    typeof baseExtra.inviteCode === "string" && baseExtra.inviteCode.trim().length > 0
+      ? normalizeInviteCode(baseExtra.inviteCode as string)
+      : generateInviteCode();
+
+  delete baseExtra.gamePreferences;
+  delete baseExtra.timeSlots;
+  delete baseExtra.inviteCode;
+  delete baseExtra.gamePref;
+  delete baseExtra.timeSlot;
+
+  const gamePreferenceSet = new Set<string>();
+  if (Array.isArray((extra as { gamePreferences?: string[] })?.gamePreferences)) {
+    for (const pref of (extra as { gamePreferences?: string[] }).gamePreferences ?? []) {
+      if (typeof pref === "string" && pref.trim()) {
+        gamePreferenceSet.add(pref.trim());
+      }
+    }
+  }
+  if (primaryGamePref) {
+    gamePreferenceSet.add(primaryGamePref);
+  }
+
+  const timeSlotSet = new Set<string>();
+  if (Array.isArray((extra as { timeSlots?: string[] })?.timeSlots)) {
+    for (const slot of (extra as { timeSlots?: string[] }).timeSlots ?? []) {
+      if (typeof slot === "string" && slot.trim()) {
+        timeSlotSet.add(slot.trim());
+      }
+    }
+  }
+  if (primaryTimeSlot) {
+    timeSlotSet.add(primaryTimeSlot);
+  }
+
+  const createProfileData = {
+    name,
+    ...baseExtra,
+    inviteCode,
+    gamePref: primaryGamePref ?? null,
+    timeSlot: primaryTimeSlot ?? null,
+    gamePreferences: Array.from(gamePreferenceSet),
+    timeSlots: Array.from(timeSlotSet),
+  };
+
+  const updateProfileData = {
+    name,
+    ...baseExtra,
+    inviteCode,
+    ...(primaryGamePref !== undefined ? { gamePref: primaryGamePref } : {}),
+    ...(primaryTimeSlot !== undefined ? { timeSlot: primaryTimeSlot } : {}),
+    gamePreferences: { set: Array.from(gamePreferenceSet) },
+    timeSlots: { set: Array.from(timeSlotSet) },
+  };
+
+  const existing = await prisma.user.findUnique({ where: { email }, include: { profile: true } });
+
+  const userRecord = existing?.profile
+    ? await prisma.user.update({
+        where: { email },
+        data: {
+          profile: {
+            update: updateProfileData,
+          },
+        },
+        include: { profile: true },
+      })
+    : await prisma.user.upsert({
+        where: { email },
         update: {
-          name,
-          ...extra,
+          profile: {
+            create: createProfileData,
+          },
         },
-      },
-    },
-    create: {
-      email,
-      profile: {
         create: {
-          name,
-          ...extra,
+          email,
+          profile: {
+            create: createProfileData,
+          },
         },
-      },
-    },
-    include: {
-      profile: true,
-    },
+        include: {
+          profile: true,
+        },
+      });
+
+  if (!userRecord.profile) {
+    throw new Error(`Failed to load profile for ${email}`);
+  }
+
+  const inviteRecord = await prisma.inviteCode.findUnique({
+    where: { code: inviteCode },
   });
+
+  if (!inviteRecord) {
+    await prisma.inviteCode.create({
+      data: {
+        code: inviteCode,
+        claimedByProfileId: userRecord.profile.id,
+        claimedAt: new Date(),
+      },
+    });
+  } else if (inviteRecord.claimedByProfileId !== userRecord.profile.id) {
+    throw new Error(`Invite code ${inviteCode} already claimed by another profile`);
+  } else if (!inviteRecord.claimedAt) {
+    await prisma.inviteCode.update({
+      where: { id: inviteRecord.id },
+      data: { claimedAt: new Date(), claimedByProfileId: userRecord.profile.id },
+    });
+  }
+
+  return userRecord;
 }
 
 async function main() {

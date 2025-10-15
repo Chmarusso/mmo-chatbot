@@ -17,11 +17,13 @@ export type MatchSummary = {
 interface MatchBadgeContextValue {
   unreadMatches: number;
   matchSummaries: MatchSummary[];
+  requiresInvite: boolean;
 }
 
 export const MatchBadgeContext = createContext<MatchBadgeContextValue>({
   unreadMatches: 0,
   matchSummaries: [],
+  requiresInvite: false,
 });
 
 export function MatchBadgeProvider({ children }: { children: ReactNode }) {
@@ -30,6 +32,7 @@ export function MatchBadgeProvider({ children }: { children: ReactNode }) {
   const contextValue: MatchBadgeContextValue = {
     unreadMatches: data?.unreadMatches ?? 0,
     matchSummaries: data?.matches ?? [],
+    requiresInvite: Boolean(data?.requiresInvite),
   };
 
   return (

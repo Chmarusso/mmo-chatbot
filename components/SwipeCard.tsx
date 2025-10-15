@@ -85,10 +85,12 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
               {preferenceLabel(profile.playstyle, PLAYSTYLES)}
             </Badge>
           )}
-          {profile.timeSlot && (
-            <Badge variant="timeslot">
-              {preferenceLabel(profile.timeSlot, TIME_SLOTS)}
-            </Badge>
+          {(profile.timeSlots?.length ? profile.timeSlots : profile.timeSlot ? [profile.timeSlot] : []).map(
+            (slot) => (
+              <Badge key={slot} variant="timeslot">
+                {preferenceLabel(slot, TIME_SLOTS)}
+              </Badge>
+            )
           )}
           {profile.language && (
             <Badge variant="language">

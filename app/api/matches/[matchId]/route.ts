@@ -13,6 +13,10 @@ export async function DELETE(request: Request, { params }: RouteProps) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
+  }
+
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     select: { id: true, user1Id: true, user2Id: true },
@@ -44,6 +48,10 @@ export async function POST(request: Request, { params }: RouteProps) {
   const profile = await getOrCreateProfile().catch(() => null);
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
   }
 
   const match = await prisma.match.findUnique({
