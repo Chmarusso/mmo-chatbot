@@ -96,6 +96,52 @@ async function searchGoogle(gameTitle: string): Promise<string[]> {
 }
 
 /**
+ * Search for gameplay images using Serper.dev image search
+ */
+async function searchGameplayImage(gameTitle: string): Promise<string> {
+  console.log(`  🖼️  Searching for gameplay images...`);
+
+  try {
+    const response = await fetch("https://google.serper.dev/images", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": SERPER_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        q: `${gameTitle} 2025 gameplay`,
+        num: 5,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`  ⚠️  Image search failed: ${response.status}`);
+      return "";
+    }
+
+    const data = await response.json();
+    const images = data?.images || [];
+
+    if (images.length === 0) {
+      console.log(`  ⚠️  No gameplay images found`);
+      return "";
+    }
+
+    // Get the first image URL
+    const imageUrl = images[0]?.imageUrl || "";
+
+    if (imageUrl) {
+      console.log(`  ✓ Found gameplay image`);
+    }
+
+    return imageUrl;
+  } catch (error) {
+    console.error(`  ❌ Image search error:`, error);
+    return "";
+  }
+}
+
+/**
  * Search Reddit for game discussions and player insights
  */
 async function searchReddit(gameTitle: string): Promise<string> {
@@ -318,6 +364,12 @@ async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null
   }
 
   console.log(`\n  ✓ Scraped ${sources.length} sources successfully`);
+
+  // If no screenshot found from scraping, search for gameplay images
+  if (!screenshot) {
+    console.log(`\n  📸 No screenshot found in scraped sources, searching for gameplay images...`);
+    screenshot = await searchGameplayImage(gameTitle);
+  }
 
   if (!combinedDescription && !sonarInfo) {
     console.error("❌ Could not extract meaningful information");
