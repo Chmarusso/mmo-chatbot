@@ -105,21 +105,22 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
         </div>
       </div>
 
-      {/* Login prompt for unauthenticated users */}
+      {/* Fun login prompt for unauthenticated users */}
       {!isAuthenticated && (
-        <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-8 text-center">
-          <Lock className="mx-auto mb-4 text-accent-purple" size={48} />
-          <h2 className="mb-2 text-xl font-semibold text-white">
-            Sign in to view full profile
+        <div className="rounded-3xl border border-accent-purple/20 bg-gradient-to-br from-surface/80 to-accent-purple/5 p-8 text-center">
+          <div className="mb-4 text-6xl">🎮</div>
+          <h2 className="mb-3 text-2xl font-bold text-white">
+            This profile is invite-only!
           </h2>
-          <p className="mb-6 text-text-secondary">
-            Create an account or sign in to see {profile.name}'s games, playstyle, and availability
+          <p className="mb-6 text-base text-text-secondary">
+            Want to see {profile.name}'s epic gaming setup, favorite games, and when they're online?
+            Join MMOPLAYA to unlock the full squad experience! 🚀
           </p>
           <a
             href="/auth/login"
-            className="inline-block rounded-full bg-accent-purple px-6 py-3 text-sm font-medium text-white transition hover:bg-accent-purple/80"
+            className="inline-block rounded-full bg-gradient-to-r from-accent-purple to-accent-pink px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:shadow-xl"
           >
-            Sign In
+            Join the Party 🎉
           </a>
         </div>
       )}
