@@ -46,11 +46,16 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
     notFound();
   }
 
-  // Get all game preferences
-  const gamePreferences = await prisma.game.findMany({
+  // Get all game preferences - combine both old gamePref and new gamePreferences
+  const gameValues = [...profile.gamePreferences];
+  if (profile.gamePref && !gameValues.includes(profile.gamePref)) {
+    gameValues.push(profile.gamePref);
+  }
+
+  const gamePreferences = gameValues.length > 0 ? await prisma.game.findMany({
     where: {
       value: {
-        in: profile.gamePreferences,
+        in: gameValues,
       },
     },
     select: {
@@ -63,7 +68,7 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
         },
       },
     },
-  });
+  }) : [];
 
   // Get time slot preferences
   const timeSlotPreferences = await prisma.timeSlotOption.findMany({
@@ -98,23 +103,45 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
       </div>
 
       {/* Game Preferences */}
-      {gamePreferences.length > 0 && (
+      {(gamePreferences.length > 0 || profile.preferredGame) && (
         <section className="space-y-4">
           <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
             <Gamepad2 size={24} className="text-accent-purple" />
-            Games I Play
+            {gamePreferences.length > 1 ? "Games I Play" : "Favorite Game"}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {gamePreferences.map((game) => (
-              <div
-                key={game.value}
-                className="overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80"
-              >
-                {game.screenshot && (
+            {gamePreferences.length > 0 ? (
+              gamePreferences.map((game) => (
+                <div
+                  key={game.value}
+                  className="overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80"
+                >
+                  {game.screenshot && (
+                    <div className="relative h-32 w-full overflow-hidden">
+                      <Image
+                        src={game.screenshot}
+                        alt={game.label}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-white">{game.label}</h3>
+                    {game.category && (
+                      <p className="text-sm text-text-secondary">{game.category.label}</p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : profile.preferredGame ? (
+              <div className="overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80">
+                {profile.preferredGame.screenshot && (
                   <div className="relative h-32 w-full overflow-hidden">
                     <Image
-                      src={game.screenshot}
-                      alt={game.label}
+                      src={profile.preferredGame.screenshot}
+                      alt={profile.preferredGame.label}
                       fill
                       className="object-cover"
                       sizes="(max-width: 640px) 100vw, 50vw"
@@ -122,13 +149,10 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
                   </div>
                 )}
                 <div className="p-4">
-                  <h3 className="font-semibold text-white">{game.label}</h3>
-                  {game.category && (
-                    <p className="text-sm text-text-secondary">{game.category.label}</p>
-                  )}
+                  <h3 className="font-semibold text-white">{profile.preferredGame.label}</h3>
                 </div>
               </div>
-            ))}
+            ) : null}
           </div>
         </section>
       )}
