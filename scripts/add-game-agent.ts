@@ -2,21 +2,18 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const RAWG_API_KEY = process.env.RAWG_API_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 
-interface RawgGame {
-  id: number;
-  name: string;
-  description_raw?: string;
-  background_image?: string;
-  website?: string;
-  genres?: Array<{ id: number; name: string; slug: string }>;
-  platforms?: Array<{ platform: { id: number; name: string } }>;
-  metacritic?: number;
-  released?: string;
-  short_screenshots?: Array<{ id: number; image: string }>;
+interface ScrapedGameData {
+  title: string;
+  rawDescription: string;
+  website: string;
+  screenshot: string;
+  genres: string[];
+  platforms: string[];
+  releaseDate?: string;
+  sources: string[];
 }
 
 interface GameData {
@@ -28,47 +25,248 @@ interface GameData {
 }
 
 /**
- * Search RAWG.io for game information
+ * Extract text content from HTML
  */
-async function searchRawg(gameTitle: string): Promise<RawgGame | null> {
-  if (!RAWG_API_KEY) {
-    throw new Error("RAWG_API_KEY environment variable is required");
-  }
+function extractTextFromHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  const searchUrl = `https://api.rawg.io/api/games?key=${RAWG_API_KEY}&search=${encodeURIComponent(gameTitle)}&page_size=1`;
+/**
+ * Search Google for game information
+ */
+async function searchGoogle(gameTitle: string): Promise<string[]> {
+  console.log(`  🔍 Searching Google for: "${gameTitle}"`);
+
+  const searchQuery = encodeURIComponent(`${gameTitle} game official website`);
+  const searchUrl = `https://www.google.com/search?q=${searchQuery}`;
 
   try {
-    const response = await fetch(searchUrl);
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+
     if (!response.ok) {
-      console.error(`RAWG API error: ${response.status} ${response.statusText}`);
-      return null;
+      console.warn(`  ⚠️  Google search failed: ${response.status}`);
+      return [];
     }
 
-    const data = await response.json();
-    if (!data.results || data.results.length === 0) {
-      console.log(`No results found for "${gameTitle}"`);
-      return null;
-    }
+    const html = await response.text();
 
-    return data.results[0];
+    // Extract URLs from search results
+    const urlPattern = /https?:\/\/[^\s"<>]+/g;
+    const urls = html.match(urlPattern) || [];
+
+    // Filter for relevant game websites
+    const relevantUrls = urls
+      .filter((url) => {
+        const lower = url.toLowerCase();
+        return (
+          !lower.includes("google.com") &&
+          !lower.includes("youtube.com") &&
+          !lower.includes("facebook.com") &&
+          !lower.includes("twitter.com") &&
+          !lower.includes("instagram.com") &&
+          (lower.includes("steam") ||
+           lower.includes("playstation") ||
+           lower.includes("xbox") ||
+           lower.includes("nintendo") ||
+           lower.includes("game") ||
+           lower.includes(gameTitle.toLowerCase().replace(/\s+/g, "")))
+        );
+      })
+      .slice(0, 10);
+
+    console.log(`  ✓ Found ${relevantUrls.length} potential sources`);
+    return relevantUrls;
   } catch (error) {
-    console.error("Error fetching from RAWG:", error);
-    return null;
+    console.error(`  ❌ Google search error:`, error);
+    return [];
   }
 }
 
 /**
- * Use AI to analyze game data and suggest category
+ * Search Reddit for game discussions and player insights
+ */
+async function searchReddit(gameTitle: string): Promise<string> {
+  console.log(`  🔍 Searching Reddit for player insights...`);
+
+  const searchQuery = encodeURIComponent(`${gameTitle} game`);
+  const searchUrl = `https://www.reddit.com/search.json?q=${searchQuery}&sort=relevance&limit=10`;
+
+  try {
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`  ⚠️  Reddit search failed: ${response.status}`);
+      return "";
+    }
+
+    const data = await response.json();
+    const posts = data?.data?.children || [];
+
+    if (posts.length === 0) {
+      console.log(`  ⚠️  No Reddit posts found`);
+      return "";
+    }
+
+    // Extract titles and self-text from posts
+    const insights = posts
+      .slice(0, 5)
+      .map((post: any) => {
+        const title = post.data?.title || "";
+        const selftext = post.data?.selftext || "";
+        return `${title} ${selftext}`.slice(0, 500);
+      })
+      .join(" ");
+
+    console.log(`  ✓ Found Reddit discussions (${posts.length} posts)`);
+    return insights;
+  } catch (error) {
+    console.error(`  ❌ Reddit search error:`, error);
+    return "";
+  }
+}
+
+/**
+ * Scrape a website for game information
+ */
+async function scrapeWebsite(url: string): Promise<{ text: string; screenshot: string }> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+    });
+
+    if (!response.ok) {
+      return { text: "", screenshot: "" };
+    }
+
+    const html = await response.text();
+
+    // Extract meta description
+    const metaDescMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
+    const metaDesc = metaDescMatch?.[1] || "";
+
+    // Extract og:description
+    const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i);
+    const ogDesc = ogDescMatch?.[1] || "";
+
+    // Extract og:image for screenshot
+    const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
+    const screenshot = ogImageMatch?.[1] || "";
+
+    // Extract main content text
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    const bodyHtml = bodyMatch?.[1] || html;
+    const bodyText = extractTextFromHtml(bodyHtml).slice(0, 2000);
+
+    const combinedText = `${metaDesc} ${ogDesc} ${bodyText}`;
+
+    return { text: combinedText, screenshot };
+  } catch (error) {
+    return { text: "", screenshot: "" };
+  }
+}
+
+/**
+ * Gather game information from web sources
+ */
+async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null> {
+  console.log(`\n📡 Gathering information from the web...\n`);
+
+  // Step 1: Search Google for relevant URLs
+  const urls = await searchGoogle(gameTitle);
+
+  if (urls.length === 0) {
+    console.error("❌ Could not find any relevant sources");
+    return null;
+  }
+
+  // Step 2: Search Reddit for community insights
+  const redditInsights = await searchReddit(gameTitle);
+
+  // Step 3: Scrape multiple sources
+  console.log(`\n  📄 Scraping ${Math.min(urls.length, 5)} sources...`);
+
+  let combinedDescription = redditInsights;
+  let screenshot = "";
+  let officialWebsite = "";
+  const sources: string[] = [];
+
+  for (let i = 0; i < Math.min(urls.length, 5); i++) {
+    const url = urls[i];
+    console.log(`    ${i + 1}. ${url.slice(0, 60)}...`);
+
+    const scraped = await scrapeWebsite(url);
+
+    if (scraped.text) {
+      combinedDescription += " " + scraped.text;
+      sources.push(url);
+    }
+
+    if (!screenshot && scraped.screenshot) {
+      screenshot = scraped.screenshot;
+    }
+
+    // Prioritize official-looking websites
+    if (!officialWebsite && (
+      url.includes("steam") ||
+      url.includes(".com") ||
+      url.includes("official")
+    )) {
+      officialWebsite = url;
+    }
+
+    // Add delay to be respectful
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  console.log(`\n  ✓ Scraped ${sources.length} sources successfully`);
+
+  if (!combinedDescription) {
+    console.error("❌ Could not extract meaningful information");
+    return null;
+  }
+
+  return {
+    title: gameTitle,
+    rawDescription: combinedDescription.slice(0, 5000), // Limit for AI processing
+    website: officialWebsite || urls[0] || "",
+    screenshot,
+    genres: [],
+    platforms: [],
+    sources,
+  };
+}
+
+/**
+ * Use AI to analyze scraped data and create description
  */
 async function analyzeGameWithAI(
-  gameData: RawgGame,
+  scrapedData: ScrapedGameData,
   availableCategories: Array<{ value: string; label: string }>
 ): Promise<{ description: string; categorySlug: string | null }> {
   if (!OPENROUTER_KEY) {
-    // Fallback if no AI available
+    console.warn("⚠️  OPENROUTER_API_KEY not set, using fallback description");
     return {
-      description: gameData.description_raw?.slice(0, 480) || "No description available",
-      categorySlug: mapGenreToCategory(gameData.genres?.[0]?.slug, availableCategories),
+      description: scrapedData.rawDescription.slice(0, 480),
+      categorySlug: null,
     };
   }
 
@@ -76,25 +274,34 @@ async function analyzeGameWithAI(
     .map((cat) => `- ${cat.value}: ${cat.label}`)
     .join("\n");
 
-  const prompt = `Analyze this game and provide:
-1. A concise, engaging description (max 480 characters) highlighting what makes it interesting for players
-2. The most appropriate category from the list below
+  const prompt = `You are a game database curator. Based on the scraped web content and Reddit discussions about "${scrapedData.title}", create:
 
-Game: ${gameData.name}
-Description: ${gameData.description_raw?.slice(0, 1000) || "N/A"}
-Genres: ${gameData.genres?.map((g) => g.name).join(", ") || "N/A"}
-Platforms: ${gameData.platforms?.map((p) => p.platform.name).join(", ") || "N/A"}
-Release Date: ${gameData.released || "N/A"}
-Metacritic Score: ${gameData.metacritic || "N/A"}
+1. An engaging, concise description (MAX 480 characters) highlighting:
+   - What makes this game interesting for players
+   - Key gameplay features
+   - The gaming experience it offers
+
+2. The most appropriate category from the available list
+
+Web Content & Player Insights:
+${scrapedData.rawDescription}
 
 Available categories:
 ${categoriesList}
 
+IMPORTANT:
+- Description must be EXACTLY 480 characters or less
+- Make it exciting and player-focused
+- Extract real facts from the content, don't make things up
+- If you can't determine a category, set it to null
+
 Respond in JSON format:
 {
-  "description": "Your engaging description here",
-  "categorySlug": "category_value_here or null if none fit"
+  "description": "Your engaging description here (max 480 chars)",
+  "categorySlug": "category_value_here or null"
 }`;
+
+  console.log(`\n🤖 Analyzing content with AI...\n`);
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -114,7 +321,7 @@ Respond in JSON format:
           },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 600,
       }),
     });
 
@@ -129,52 +336,32 @@ Respond in JSON format:
       throw new Error("No response from AI");
     }
 
-    // Extract JSON from response (might be wrapped in markdown code blocks)
+    // Extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not parse AI response");
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
+
+    // Ensure description is within limit
+    const description = parsed.description?.slice(0, 480) || scrapedData.rawDescription.slice(0, 480);
+
+    console.log(`  ✓ AI analysis complete`);
+
     return {
-      description: parsed.description?.slice(0, 480) || gameData.description_raw?.slice(0, 480) || "No description available",
+      description,
       categorySlug: parsed.categorySlug || null,
     };
   } catch (error) {
-    console.error("AI analysis failed, using fallback:", error);
+    console.error("  ❌ AI analysis failed:", error);
+    console.log("  ↪️  Using fallback description");
+
     return {
-      description: gameData.description_raw?.slice(0, 480) || "No description available",
-      categorySlug: mapGenreToCategory(gameData.genres?.[0]?.slug, availableCategories),
+      description: scrapedData.rawDescription.slice(0, 480),
+      categorySlug: null,
     };
   }
-}
-
-/**
- * Simple genre to category mapping fallback
- */
-function mapGenreToCategory(
-  genreSlug: string | undefined,
-  availableCategories: Array<{ value: string; label: string }>
-): string | null {
-  if (!genreSlug) return null;
-
-  const mapping: Record<string, string> = {
-    massively_multiplayer: "mmorpg",
-    mmo: "mmorpg",
-    rpg: "action_rpg",
-    action: "action_rpg",
-    survival: "survival",
-    shooter: "fps",
-    strategy: "strategy",
-    racing: "racing",
-  };
-
-  const mapped = mapping[genreSlug];
-  if (mapped && availableCategories.some((cat) => cat.value === mapped)) {
-    return mapped;
-  }
-
-  return null;
 }
 
 /**
@@ -209,8 +396,8 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
   });
 
   if (existing) {
-    console.log(`Game "${gameData.title}" already exists in database with slug: ${slug}`);
-    console.log("Updating existing game...");
+    console.log(`\n📝 Game "${gameData.title}" already exists (slug: ${slug})`);
+    console.log("   Updating with new data...");
 
     await prisma.game.update({
       where: { value: slug },
@@ -223,7 +410,7 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
       },
     });
 
-    console.log("✓ Game updated successfully!");
+    console.log("   ✓ Updated successfully!");
     return;
   }
 
@@ -239,7 +426,8 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
     },
   });
 
-  console.log(`✓ Game "${gameData.title}" added successfully with slug: ${slug}`);
+  console.log(`\n✓ Game "${gameData.title}" added successfully!`);
+  console.log(`   Slug: ${slug}`);
 }
 
 /**
@@ -251,57 +439,61 @@ async function main() {
   if (!gameTitle) {
     console.log("Usage: pnpm add-game <game title>");
     console.log("\nExample: pnpm add-game 'World of Warcraft'");
-    console.log("\nRequired environment variables:");
-    console.log("  RAWG_API_KEY - Get from https://rawg.io/apidocs");
-    console.log("  OPENROUTER_API_KEY (optional) - For AI-enhanced descriptions");
+    console.log("\nOptional environment variables:");
+    console.log("  OPENROUTER_API_KEY - For AI-enhanced descriptions");
+    console.log("\nThis script will:");
+    console.log("  1. Search Google for game information");
+    console.log("  2. Search Reddit for player insights");
+    console.log("  3. Scrape relevant websites");
+    console.log("  4. Use AI to create engaging description");
+    console.log("  5. Add game to database");
     process.exit(1);
   }
 
-  console.log(`\n🔍 Searching for game: "${gameTitle}"\n`);
+  console.log(`\n🎮 Adding game: "${gameTitle}"`);
+  console.log("━".repeat(60));
 
-  // Step 1: Search RAWG
-  const rawgGame = await searchRawg(gameTitle);
-  if (!rawgGame) {
-    console.error("❌ Could not find game on RAWG.io");
+  // Step 1: Gather information from web
+  const scrapedData = await gatherGameInfo(gameTitle);
+
+  if (!scrapedData) {
+    console.error("\n❌ Failed to gather sufficient information");
     process.exit(1);
   }
 
-  console.log(`✓ Found: ${rawgGame.name}`);
-  console.log(`  Genres: ${rawgGame.genres?.map((g) => g.name).join(", ") || "N/A"}`);
-  console.log(`  Released: ${rawgGame.released || "N/A"}`);
-  console.log(`  Metacritic: ${rawgGame.metacritic || "N/A"}\n`);
+  console.log(`\n✓ Information gathered from ${scrapedData.sources.length} sources`);
 
   // Step 2: Get available categories
   const categories = await prisma.gameCategory.findMany({
     select: { value: true, label: true },
   });
 
-  console.log("📊 Analyzing game with AI...\n");
-
   // Step 3: Analyze with AI
-  const analysis = await analyzeGameWithAI(rawgGame, categories);
+  const analysis = await analyzeGameWithAI(scrapedData, categories);
 
   // Step 4: Prepare game data
   const gameData: GameData = {
-    title: rawgGame.name,
+    title: gameTitle,
     description: analysis.description,
-    screenshot: rawgGame.background_image || rawgGame.short_screenshots?.[0]?.image || "",
-    website: rawgGame.website || `https://rawg.io/games/${rawgGame.id}`,
+    screenshot: scrapedData.screenshot,
+    website: scrapedData.website,
     categorySlug: analysis.categorySlug || undefined,
   };
 
-  console.log("📝 Game data prepared:");
+  console.log(`\n📋 Game Summary:`);
+  console.log("━".repeat(60));
   console.log(`  Title: ${gameData.title}`);
   console.log(`  Description: ${gameData.description.slice(0, 100)}...`);
   console.log(`  Category: ${gameData.categorySlug || "None"}`);
-  console.log(`  Screenshot: ${gameData.screenshot ? "Yes" : "No"}`);
-  console.log(`  Website: ${gameData.website}\n`);
+  console.log(`  Screenshot: ${gameData.screenshot ? "✓" : "✗"}`);
+  console.log(`  Website: ${gameData.website ? "✓" : "✗"}`);
 
   // Step 5: Add to database
-  console.log("💾 Adding to database...\n");
+  console.log(`\n💾 Saving to database...`);
   await addGameToDatabase(gameData);
 
   console.log("\n✨ Done!");
+  console.log("━".repeat(60));
 }
 
 main()
