@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { downloadAndUploadToSupabase } from "../lib/supabase-storage";
 
 const prisma = new PrismaClient();
 
@@ -629,11 +630,31 @@ async function main() {
   // Step 3: Analyze with AI
   const analysis = await analyzeGameWithAI(scrapedData, categories);
 
-  // Step 4: Prepare game data
+  // Step 4: Upload screenshot to Supabase if we have one
+  let uploadedScreenshotUrl = scrapedData.screenshot;
+  if (scrapedData.screenshot && !scrapedData.screenshot.includes("supabase.co")) {
+    console.log(`\n📤 Uploading screenshot to Supabase...`);
+    try {
+      const slug = createSlug(gameTitle);
+      const ext = scrapedData.screenshot.split(".").pop()?.split("?")[0] || "jpg";
+      const filename = `${slug}-${Date.now()}.${ext}`;
+      uploadedScreenshotUrl = await downloadAndUploadToSupabase(
+        scrapedData.screenshot,
+        "game-screenshots",
+        filename
+      );
+      console.log(`  ✓ Screenshot uploaded successfully`);
+    } catch (error) {
+      console.error(`  ⚠️  Failed to upload screenshot, using original URL:`, error);
+      uploadedScreenshotUrl = scrapedData.screenshot;
+    }
+  }
+
+  // Step 5: Prepare game data
   const gameData: GameData = {
     title: gameTitle,
     description: analysis.description,
-    screenshot: scrapedData.screenshot,
+    screenshot: uploadedScreenshotUrl,
     website: scrapedData.website,
     categorySlug: analysis.categorySlug || undefined,
   };
@@ -646,7 +667,7 @@ async function main() {
   console.log(`  Screenshot: ${gameData.screenshot ? "✓" : "✗"}`);
   console.log(`  Website: ${gameData.website ? "✓" : "✗"}`);
 
-  // Step 5: Add to database
+  // Step 6: Add to database
   console.log(`\n💾 Saving to database...`);
   await addGameToDatabase(gameData);
 

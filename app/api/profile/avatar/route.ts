@@ -1,19 +1,9 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir, stat, unlink } from "fs/promises";
-import path from "path";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile } from "@/lib/profile";
+import { uploadToSupabase, deleteFromSupabase } from "@/lib/supabase-storage";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
-
-async function ensureUploadDir() {
-  try {
-    await stat(UPLOAD_DIR);
-  } catch {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-  }
-}
 
 export async function POST(request: Request) {
   const profile = await getOrCreateProfile().catch(() => null);
@@ -38,23 +28,29 @@ export async function POST(request: Request) {
   const ext = file.name.split(".").pop() ?? "png";
   const filename = `${profile.id}-${Date.now()}.${ext}`;
 
-  await ensureUploadDir();
+  try {
+    // Upload to Supabase
+    const publicUrl = await uploadToSupabase(buffer, "avatars", filename);
 
-  const filePath = path.join(UPLOAD_DIR, filename);
-  await writeFile(filePath, buffer);
+    // Delete old avatar from Supabase if it exists and is a Supabase URL
+    if (profile.avatarUrl && profile.avatarUrl.includes("supabase.co")) {
+      await deleteFromSupabase(profile.avatarUrl, "avatars").catch((err) => {
+        console.error("Failed to delete old avatar:", err);
+      });
+    }
 
-  const relativePath = `/uploads/${filename}`;
+    // Update database with new avatar URL
+    const updated = await prisma.profile.update({
+      where: { id: profile.id },
+      data: { avatarUrl: publicUrl },
+    });
 
-  // Clean up previous avatar if it existed and was stored locally
-  if (profile.avatarUrl?.startsWith("/uploads/")) {
-    const previousPath = path.join(process.cwd(), "public", profile.avatarUrl.replace(/^\//, ""));
-    await unlink(previousPath).catch(() => undefined);
+    return NextResponse.json({ url: updated.avatarUrl });
+  } catch (error) {
+    console.error("Avatar upload error:", error);
+    return NextResponse.json(
+      { error: "Failed to upload avatar" },
+      { status: 500 }
+    );
   }
-
-  const updated = await prisma.profile.update({
-    where: { id: profile.id },
-    data: { avatarUrl: relativePath },
-  });
-
-  return NextResponse.json({ url: updated.avatarUrl });
 }

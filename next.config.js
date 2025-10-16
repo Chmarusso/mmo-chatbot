@@ -25,6 +25,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.rbxcdn.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
     ],
   },
 };
