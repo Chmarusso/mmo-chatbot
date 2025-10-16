@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { GuildMessage } from "@/types/guild";
+import { Send } from "lucide-react";
 
 interface GuildChatRoomProps {
   guildId: string;
@@ -64,9 +65,8 @@ export function GuildChatRoom({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!canSend) return;
+  const sendMessage = useCallback(async () => {
+    if (!canSend || isSending) return;
     const trimmed = message.trim();
     if (!trimmed) return;
 
@@ -98,6 +98,18 @@ export function GuildChatRoom({
       toast.error(error instanceof Error ? error.message : "Message failed to send");
     } finally {
       setIsSending(false);
+    }
+  }, [canSend, guildId, isSending, message]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await sendMessage();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void sendMessage();
     }
   };
 
@@ -140,12 +152,19 @@ export function GuildChatRoom({
         <Input
           value={message}
           onChange={(event) => setMessage(event.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Send a message"
           autoComplete="off"
           disabled={!canSend}
         />
-        <Button type="submit" disabled={isSending || !message.trim() || !canSend}>
-          Send
+        <Button
+          type="submit"
+          disabled={isSending || !message.trim() || !canSend}
+          size="icon"
+          className="h-11 w-11 rounded-2xl bg-accent-cyan text-background hover:bg-accent-cyan/90"
+          aria-label="Send message"
+        >
+          <Send className="h-4 w-4" aria-hidden="true" />
         </Button>
       </form>
     </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export const ChatBubbleMessage = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "inline-flex max-w-[78%] flex-col rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
+      "flex w-full flex-col rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
       variant === "sent"
         ? "bg-accent-cyan/20 text-accent-cyan backdrop-blur"
         : "bg-background/85 text-foreground",
@@ -136,9 +137,11 @@ export const ChatInput = React.forwardRef<HTMLFormElement, ChatInputProps>(
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-11 rounded-2xl bg-accent-cyan px-5 text-background hover:bg-accent-cyan/90"
+            size="icon"
+            className="h-11 w-11 rounded-2xl bg-accent-cyan text-background hover:bg-accent-cyan/90"
+            aria-label={actionLabel}
           >
-            {actionLabel}
+            <Send className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

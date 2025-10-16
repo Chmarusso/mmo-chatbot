@@ -1,11 +1,19 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  ChatContainer,
+  ChatHeader,
+  ChatMessages,
+  ChatBubble,
+  ChatBubbleMessage,
+  ChatBubbleTimestamp,
+  ChatInput,
+} from "@/components/ui/chat";
 import type { ChatMessage } from "@/types/chat";
 import {
   DropdownMenu,
@@ -13,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMatchBadge } from "@/components/MatchBadgeProvider";
 import { useMarkMatchViewedOnce } from "@/lib/hooks/useMarkMatchViewedOnce";
 import type { Profile as UserProfile } from "@/types/profile";
 import {
@@ -50,6 +57,7 @@ export function ChatRoom({
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const latestTimestampRef = useRef<string | null>(
     initialMessages.length ? initialMessages[initialMessages.length - 1].createdAt : null
   );
@@ -143,9 +151,42 @@ export function ChatRoom({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  useEffect(() => {
+    console.log("useEffect running, inputRef.current:", inputRef.current);
+    const input = inputRef.current;
+    if (!input) {
+      console.error("Input ref is null!");
+      return;
+    }
+
+    console.log("Attaching keydown listener to input");
+    const handleKeyPress = (event: globalThis.KeyboardEvent) => {
+      console.log("Key event detected:", event.key);
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log("Enter pressed, submitting");
+        const form = input.form;
+        if (form) {
+          form.requestSubmit();
+        } else {
+          console.error("No form found!");
+        }
+      }
+    };
+
+    input.addEventListener("keydown", handleKeyPress);
+    console.log("Listener attached");
+    return () => {
+      console.log("Cleaning up listener");
+      input.removeEventListener("keydown", handleKeyPress);
+    };
+  }, []);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canSend) return;
+
+    if (!canSend || isSending) return;
     const trimmed = message.trim();
     if (!trimmed) return;
 
@@ -186,8 +227,8 @@ export function ChatRoom({
   };
 
   return (
-    <div className="flex h-[520px] flex-col rounded-3xl border border-accent-purple/30 bg-surface/80 shadow-glow lg:h-[640px]">
-      <div className="flex items-center justify-between gap-3 border-b border-accent-cyan/20 p-4 lg:p-6">
+    <ChatContainer className="h-[520px] shadow-glow lg:h-[640px]">
+      <ChatHeader>
         <div className="space-y-2">
           <div>
             <p className="text-sm text-gray-400 lg:text-base">Chatting with</p>
@@ -268,63 +309,56 @@ export function ChatRoom({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </ChatHeader>
+
       {!canSend && readOnlyReason ? (
         <div className="border-b border-accent-cyan/20 bg-surface/70 px-4 py-3 text-xs text-gray-300 lg:px-6 lg:text-sm">
           {readOnlyReason}
         </div>
       ) : null}
 
-      <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4 text-sm lg:space-y-3 lg:px-6 lg:py-6 lg:text-base">
-        {messages.map((msg) => {
-          const isOwn = msg.senderId === profileId;
-          const isRead = isOwn ? readMap.get(msg.id) ?? false : false;
-          return (
-            <div
-              key={msg.id}
-              className={`flex w-full ${isOwn ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-xs rounded-2xl px-4 py-2 lg:max-w-lg lg:px-5 lg:py-3 ${
-                  isOwn
-                    ? "bg-accent-cyan/30 text-accent-cyan"
-                    : "border border-accent-purple/30 bg-surface text-gray-100"
-                }`}
-              >
-                <p>{msg.content}</p>
-                <div
-                  className={`mt-1 flex items-center gap-2 text-[10px] text-gray-400 lg:text-[11px] ${
-                    isOwn ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <span>{formatRelativeTime(msg.createdAt)}</span>
-                  {isOwn && (
-                    isRead ? (
-                      <CheckCheck className="h-3 w-3 text-accent-cyan" aria-label="Read" />
-                    ) : (
-                      <Check className="h-3 w-3 text-gray-500" aria-label="Sent" />
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={scrollRef} />
-      </div>
+      <ChatMessages>
+        <div className="space-y-4">
+          {messages.map((msg) => {
+            const isOwn = msg.senderId === profileId;
+            const isRead = isOwn ? readMap.get(msg.id) ?? false : false;
+            return (
+              <ChatBubble key={msg.id} variant={isOwn ? "sent" : "received"}>
+                <ChatBubbleMessage variant={isOwn ? "sent" : "received"}>
+                  <p className="leading-relaxed">{msg.content}</p>
+                  <ChatBubbleTimestamp className="flex items-center gap-1.5">
+                    <span>{formatRelativeTime(msg.createdAt)}</span>
+                    {isOwn && (
+                      isRead ? (
+                        <CheckCheck className="h-3 w-3 text-accent-cyan" aria-label="Read" />
+                      ) : (
+                        <Check className="h-3 w-3 text-gray-500" aria-label="Sent" />
+                      )
+                    )}
+                  </ChatBubbleTimestamp>
+                </ChatBubbleMessage>
+              </ChatBubble>
+            );
+          })}
+          <div ref={scrollRef} />
+        </div>
+      </ChatMessages>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-accent-cyan/20 p-4 lg:gap-3 lg:p-6">
+      <ChatInput
+        onSubmit={handleSubmit}
+        isSubmitting={isSending}
+        actionLabel="Send"
+      >
         <Input
+          ref={inputRef}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           placeholder="Send a message"
           autoComplete="off"
           disabled={!canSend}
+          className="h-11 rounded-2xl border-accent-cyan/30 bg-background/60 text-base placeholder:text-gray-500 focus-visible:ring-accent-cyan/50"
         />
-        <Button type="submit" disabled={isSending || !message.trim() || !canSend}>
-          Send
-        </Button>
-      </form>
-    </div>
+      </ChatInput>
+    </ChatContainer>
   );
 }

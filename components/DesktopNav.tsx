@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import mmoplayaLogo from "@/public/mmoplaya-logo.png";
 import { APP_LINKS } from "@/components/MobileNav";
 import { cn } from "@/lib/utils";
 import { useMatchBadge } from "@/components/MatchBadgeProvider";
@@ -25,11 +23,10 @@ export function DesktopNav({ active }: DesktopNavProps) {
           aria-label="MMOPLAYA home"
           className="flex items-center transition hover:opacity-90"
         >
-          <Image
-            src={mmoplayaLogo}
+          <img
+            src="/mmoplaya-logo.png"
             alt="MMOPLAYA logo"
             className="h-8 w-auto"
-            priority
           />
         </Link>
         <div className="flex items-center gap-1">

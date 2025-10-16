@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, MessageSquareText, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,34 @@ const makeMessageId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
+
+const formatRelativeTime = (isoDate: string) => {
+  const createdAt = new Date(isoDate).getTime();
+  const diffMs = Date.now() - createdAt;
+  if (diffMs < 45_000) return "Just now";
+  const diffMinutes = Math.round(diffMs / 60_000);
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  const diffDays = Math.round(diffHours / 24);
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
+  const diffWeeks = Math.round(diffDays / 7);
+  if (diffWeeks < 4) {
+    return `${diffWeeks}w ago`;
+  }
+  const diffMonths = Math.round(diffDays / 30);
+  if (diffMonths < 12) {
+    return `${diffMonths}mo ago`;
+  }
+  const diffYears = Math.round(diffMonths / 12);
+  return `${diffYears}y ago`;
+};
 
 interface CompanionOnboardingProps {
   initialGames: string[];
@@ -173,6 +201,16 @@ export function AiCompanion() {
     }
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      const form = event.currentTarget.form;
+      if (form) {
+        form.requestSubmit();
+      }
+    }
+  };
+
   const initialGames =
     profileSnapshot?.gamePreferences?.length
       ? profileSnapshot.gamePreferences
@@ -237,7 +275,7 @@ export function AiCompanion() {
                   </p>
                 </ChatBubbleMessage>
                 <ChatBubbleTimestamp>
-                  {msg.role === "user" ? "You" : "Companion"}
+                  {msg.role === "user" ? "You" : "Companion"} · {formatRelativeTime(msg.createdAt)}
                 </ChatBubbleTimestamp>
               </div>
             </ChatBubble>
@@ -282,6 +320,7 @@ export function AiCompanion() {
           <Textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Ask for build advice, raid strats, or squad icebreakers…"
             rows={3}
             className="resize-none border-accent-purple/40 bg-surface/80 text-sm text-muted-foreground placeholder:text-muted-foreground focus-visible:ring-accent-cyan/40"

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { AuthForm } from "@/components/AuthForm";
-import mmoplayaLogo from "@/public/mmoplaya-logo.png";
 
 interface LoginPageProps {
   searchParams: Promise<{
@@ -82,11 +80,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <section className="w-full max-w-md space-y-6">
         <header className="space-y-2 text-center">
           <Link href="/" aria-label="Go to MMOPLAYA home" className="flex justify-center">
-            <Image
-              src={mmoplayaLogo}
+            <img
+              src="/mmoplaya-logo.png"
               alt="MMOPLAYA logo"
               className="mx-auto h-9 w-auto lg:hidden"
-              priority
             />
           </Link>
           <p className="text-xl font-medium text-accent-cyan">{greeting}</p>
