@@ -493,42 +493,35 @@ Respond in JSON format:
       throw new Error("No response from AI");
     }
 
-    // Extract JSON from response - handle markdown code blocks
-    let jsonString = content;
+    // Extract description and category using regex instead of JSON parsing
+    // This is more robust against formatting issues
+    let description = scrapedData.rawDescription.slice(0, 1200);
+    let categorySlug: string | null = null;
 
-    // Remove markdown code blocks if present
-    if (content.includes("```json")) {
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        jsonString = jsonMatch[1];
-      }
-    } else if (content.includes("```")) {
-      const jsonMatch = content.match(/```\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        jsonString = jsonMatch[1];
-      }
+    // Try to extract description (between "description": " and next ")
+    const descMatch = content.match(/"description"\s*:\s*"([\s\S]*?)"\s*[,}]/);
+    if (descMatch) {
+      // Unescape the JSON string and clean it
+      description = descMatch[1]
+        .replace(/\\n/g, "\n")
+        .replace(/\\r/g, "")
+        .replace(/\\t/g, " ")
+        .replace(/\\\\/g, "\\")
+        .replace(/\\"/g, '"')
+        .slice(0, 1200);
     }
 
-    // Extract just the JSON object
-    const objectMatch = jsonString.match(/\{[\s\S]*\}/);
-    if (!objectMatch) {
-      throw new Error("Could not find JSON object in AI response");
+    // Try to extract category slug
+    const categoryMatch = content.match(/"categorySlug"\s*:\s*"([^"]+)"|"categorySlug"\s*:\s*null/);
+    if (categoryMatch) {
+      categorySlug = categoryMatch[1] || null;
     }
-
-    // Clean up control characters that break JSON parsing (except newlines and tabs in strings)
-    const cleanedJson = objectMatch[0]
-      .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, " "); // Replace control chars with space
-
-    const parsed = JSON.parse(cleanedJson);
-
-    // Ensure description is within limit
-    const description = parsed.description?.slice(0, 1200) || scrapedData.rawDescription.slice(0, 1200);
 
     console.log(`  ✓ AI analysis complete`);
 
     return {
       description,
-      categorySlug: parsed.categorySlug || null,
+      categorySlug,
     };
   } catch (error) {
     console.error("  ❌ AI analysis failed:", error);
