@@ -60,6 +60,10 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
+  }
+
   let context;
   try {
     context = await resolveMembershipContext(guildId, profile.id);
@@ -111,6 +115,10 @@ export async function POST(
 
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!profile.inviteCode?.trim()) {
+    return NextResponse.json({ error: "Invite required" }, { status: 403 });
   }
 
   let context;
