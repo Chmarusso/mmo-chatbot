@@ -208,7 +208,7 @@ export default async function GamePage({ params }: GamePageProps) {
             </Link>
             {game.website && (
               <a
-                href={game.website}
+                href={`/api/games/${gameValue}/visit`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-full border border-accent-purple/40 px-4 py-3 text-sm font-medium text-text-secondary transition hover:border-accent-purple hover:text-accent-purple"

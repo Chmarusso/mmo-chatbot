@@ -26,6 +26,7 @@ model User {
   sessions  Session[]
   otpTokens OtpToken[]
   analyticsEvents AnalyticsEvent[]
+  gameWebsiteClicks GameWebsiteClick[] @relation("UserGameWebsiteClick")
 }
 
 model Profile {
@@ -92,6 +93,7 @@ model Profile {
   referredProfiles Profile[] @relation("ProfileReferrals")
   aiConversation AiConversation?
   inviteClaims InviteCode[] @relation("InviteCodeClaimer")
+  gameWebsiteClicks GameWebsiteClick[] @relation("ProfileGameWebsiteClick")
 }
 
 model InviteCode {
@@ -125,8 +127,27 @@ model Game {
   profiles    Profile[]     @relation("ProfileGame")
   ratings     GameRating[]
   comments    GameComment[]
+  websiteClicks GameWebsiteClick[]
 
   @@index([categoryId])
+}
+
+model GameWebsiteClick {
+  id        String   @id @default(uuid())
+  gameValue String   @db.VarChar(64)
+  profileId String?
+  userId    String?
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  game    Game     @relation(fields: [gameValue], references: [value], onDelete: Cascade)
+  profile Profile? @relation("ProfileGameWebsiteClick", fields: [profileId], references: [id], onDelete: SetNull)
+  user    User?    @relation("UserGameWebsiteClick", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([gameValue])
+  @@index([profileId])
+  @@index([createdAt])
 }
 
 model GameRating {
