@@ -3,6 +3,8 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { ExternalLink, Star } from "lucide-react";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
@@ -128,7 +130,49 @@ export default async function GamePage({ params }: GamePageProps) {
           {game.description && (
             <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-6">
               <h2 className="mb-3 text-xl font-semibold text-white">About</h2>
-              <p className="text-sm leading-relaxed text-text-secondary">{game.description}</p>
+              <div className="prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => (
+                      <p className="mb-4 text-sm leading-relaxed text-text-secondary last:mb-0">
+                        {children}
+                      </p>
+                    ),
+                    strong: ({ children }) => (
+                      <strong className="font-semibold text-white">{children}</strong>
+                    ),
+                    h1: ({ children }) => (
+                      <h3 className="mb-2 mt-4 text-base font-semibold text-white first:mt-0">
+                        {children}
+                      </h3>
+                    ),
+                    h2: ({ children }) => (
+                      <h3 className="mb-2 mt-4 text-base font-semibold text-white first:mt-0">
+                        {children}
+                      </h3>
+                    ),
+                    h3: ({ children }) => (
+                      <h4 className="mb-2 mt-3 text-sm font-semibold text-white first:mt-0">
+                        {children}
+                      </h4>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="mb-4 ml-4 list-disc space-y-1 text-sm text-text-secondary">
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="mb-4 ml-4 list-decimal space-y-1 text-sm text-text-secondary">
+                        {children}
+                      </ol>
+                    ),
+                    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                  }}
+                >
+                  {game.description}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
 
