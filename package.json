@@ -12,6 +12,7 @@
     "test": "vitest",
     "generate:guild-codes": "tsx scripts/generate-guild-codes.ts",
     "generate:invites": "tsx scripts/generate-invite-codes.ts",
+    "add-game": "tsx scripts/add-game-agent.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:dump": "./scripts/db-dump.sh",
     "db:restore": "./scripts/db-restore.sh",
