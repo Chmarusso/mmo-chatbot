@@ -3,7 +3,8 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
-import { Gamepad2, Globe, Clock, Languages, Target } from "lucide-react";
+import { getCurrentUser } from "@/lib/session";
+import { Gamepad2, Globe, Clock, Languages, Target, Lock } from "lucide-react";
 
 interface ProfilePageProps {
   params: Promise<{ profileId: string }>;
@@ -31,6 +32,8 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
 
 export default async function ProfileViewPage({ params }: ProfilePageProps) {
   const { profileId } = await params;
+  const currentUser = await getCurrentUser();
+  const isAuthenticated = !!currentUser;
 
   const profile = await prisma.profile.findUnique({
     where: { id: profileId },
@@ -96,14 +99,33 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
         </div>
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-white lg:text-4xl">{profile.name}</h1>
-          {profile.bio && (
+          {isAuthenticated && profile.bio && (
             <p className="text-base text-text-secondary lg:text-lg">{profile.bio}</p>
           )}
         </div>
       </div>
 
-      {/* Game Preferences */}
-      {(gamePreferences.length > 0 || profile.preferredGame) && (
+      {/* Login prompt for unauthenticated users */}
+      {!isAuthenticated && (
+        <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-8 text-center">
+          <Lock className="mx-auto mb-4 text-accent-purple" size={48} />
+          <h2 className="mb-2 text-xl font-semibold text-white">
+            Sign in to view full profile
+          </h2>
+          <p className="mb-6 text-text-secondary">
+            Create an account or sign in to see {profile.name}'s games, playstyle, and availability
+          </p>
+          <a
+            href="/auth/login"
+            className="inline-block rounded-full bg-accent-purple px-6 py-3 text-sm font-medium text-white transition hover:bg-accent-purple/80"
+          >
+            Sign In
+          </a>
+        </div>
+      )}
+
+      {/* Game Preferences - only for authenticated users */}
+      {isAuthenticated && (gamePreferences.length > 0 || profile.preferredGame) && (
         <section className="space-y-4">
           <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
             <Gamepad2 size={24} className="text-accent-purple" />
@@ -157,7 +179,8 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
         </section>
       )}
 
-      {/* Preferences Grid */}
+      {/* Preferences Grid - only for authenticated users */}
+      {isAuthenticated && (
       <section className="grid gap-4 sm:grid-cols-2">
         {/* Time Slots */}
         {timeSlotPreferences.length > 0 && (
@@ -236,9 +259,10 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
           </div>
         )}
       </section>
+      )}
 
-      {/* Level & XP (if visible) */}
-      {profile.level > 1 && (
+      {/* Level & XP (if visible) - only for authenticated users */}
+      {isAuthenticated && profile.level > 1 && (
         <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-6 text-center">
           <p className="text-sm text-text-secondary">Level</p>
           <p className="text-4xl font-bold text-accent-purple">{profile.level}</p>
