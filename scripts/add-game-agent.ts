@@ -282,14 +282,14 @@ async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null
   const redditInsights = await searchReddit(gameTitle);
 
   // Step 3: Scrape multiple sources
-  console.log(`\n  📄 Scraping ${Math.min(urls.length, 5)} sources...`);
+  console.log(`\n  📄 Scraping ${Math.min(urls.length, 10)} sources...`);
 
   let combinedDescription = redditInsights;
   let screenshot = "";
   let officialWebsite = "";
   const sources: string[] = [];
 
-  for (let i = 0; i < Math.min(urls.length, 5); i++) {
+  for (let i = 0; i < Math.min(urls.length, 10); i++) {
     const url = urls[i];
     console.log(`    ${i + 1}. ${url.slice(0, 60)}...`);
 
