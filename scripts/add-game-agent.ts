@@ -222,9 +222,30 @@ async function scrapeWebsite(url: string): Promise<{ text: string; screenshot: s
     const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i);
     const ogDesc = ogDescMatch?.[1] || "";
 
-    // Extract og:image for screenshot
+    // Extract screenshots - try multiple meta tags
+    let screenshot = "";
+
+    // Try og:image (most common)
     const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
-    const screenshot = ogImageMatch?.[1] || "";
+    screenshot = ogImageMatch?.[1] || "";
+
+    // Try twitter:image if og:image not found
+    if (!screenshot) {
+      const twitterImageMatch = html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+      screenshot = twitterImageMatch?.[1] || "";
+    }
+
+    // Try twitter:image:src
+    if (!screenshot) {
+      const twitterImageSrcMatch = html.match(/<meta\s+property=["']twitter:image:src["']\s+content=["']([^"']+)["']/i);
+      screenshot = twitterImageSrcMatch?.[1] || "";
+    }
+
+    // Try image_src link tag
+    if (!screenshot) {
+      const imageSrcMatch = html.match(/<link\s+rel=["']image_src["']\s+href=["']([^"']+)["']/i);
+      screenshot = imageSrcMatch?.[1] || "";
+    }
 
     // Extract main content text
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
@@ -324,7 +345,7 @@ async function analyzeGameWithAI(
   if (!OPENROUTER_KEY) {
     console.warn("⚠️  OPENROUTER_API_KEY not set, using fallback description");
     return {
-      description: scrapedData.rawDescription.slice(0, 480),
+      description: scrapedData.rawDescription.slice(0, 500),
       categorySlug: null,
     };
   }
@@ -339,10 +360,12 @@ async function analyzeGameWithAI(
 
   const prompt = `You are a game database curator. Based on multiple sources of information about "${scrapedData.title}", create:
 
-1. An engaging, concise description (MAX 480 characters) highlighting:
+1. An engaging, detailed description (MAX 500 characters) highlighting:
    - What makes this game interesting for players
-   - Key gameplay features
+   - Key gameplay features and mechanics
    - The gaming experience it offers
+   - What makes it unique or popular
+   - Target audience
 
 2. The most appropriate category from the available list
 ${sonarSection}
@@ -353,15 +376,16 @@ Available categories:
 ${categoriesList}
 
 IMPORTANT:
-- Description must be EXACTLY 480 characters or less
-- Make it exciting and player-focused
+- Description should be EXACTLY 500 characters (use the full limit!)
+- Make it exciting, informative, and player-focused
 - Prioritize information from Perplexity Sonar (if available) as it's most accurate
 - Extract real facts from the content, don't make things up
+- Be specific about gameplay and features
 - If you can't determine a category, set it to null
 
 Respond in JSON format:
 {
-  "description": "Your engaging description here (max 480 chars)",
+  "description": "Your engaging description here (exactly 500 chars)",
   "categorySlug": "category_value_here or null"
 }`;
 
@@ -409,7 +433,7 @@ Respond in JSON format:
     const parsed = JSON.parse(jsonMatch[0]);
 
     // Ensure description is within limit
-    const description = parsed.description?.slice(0, 480) || scrapedData.rawDescription.slice(0, 480);
+    const description = parsed.description?.slice(0, 500) || scrapedData.rawDescription.slice(0, 500);
 
     console.log(`  ✓ AI analysis complete`);
 
@@ -422,7 +446,7 @@ Respond in JSON format:
     console.log("  ↪️  Using fallback description");
 
     return {
-      description: scrapedData.rawDescription.slice(0, 480),
+      description: scrapedData.rawDescription.slice(0, 500),
       categorySlug: null,
     };
   }
