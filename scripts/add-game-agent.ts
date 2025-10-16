@@ -52,7 +52,7 @@ async function searchGoogle(gameTitle: string): Promise<string[]> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        q: `${gameTitle} game official website`,
+        q: `${gameTitle} game info`,
         num: 10,
       }),
     });
@@ -109,8 +109,8 @@ async function searchGameplayImage(gameTitle: string): Promise<string> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        q: `${gameTitle} 2025 gameplay`,
-        num: 5,
+        q: `${gameTitle} gameplay 2025`,
+        num: 10,
       }),
     });
 
@@ -127,8 +127,18 @@ async function searchGameplayImage(gameTitle: string): Promise<string> {
       return "";
     }
 
-    // Get the first image URL
-    const imageUrl = images[0]?.imageUrl || "";
+    // Filter out YouTube thumbnails and find first valid image
+    const validImages = images.filter((img: any) => {
+      const url = img?.imageUrl || "";
+      return url && !url.includes("i.ytimg.com");
+    });
+
+    if (validImages.length === 0) {
+      console.log(`  ⚠️  No valid gameplay images found (filtered out YouTube thumbnails)`);
+      return "";
+    }
+
+    const imageUrl = validImages[0]?.imageUrl || "";
 
     if (imageUrl) {
       console.log(`  ✓ Found gameplay image`);
