@@ -345,7 +345,7 @@ async function analyzeGameWithAI(
   if (!OPENROUTER_KEY) {
     console.warn("⚠️  OPENROUTER_API_KEY not set, using fallback description");
     return {
-      description: scrapedData.rawDescription.slice(0, 500),
+      description: scrapedData.rawDescription.slice(0, 1200),
       categorySlug: null,
     };
   }
@@ -360,12 +360,15 @@ async function analyzeGameWithAI(
 
   const prompt = `You are a game database curator. Based on multiple sources of information about "${scrapedData.title}", create:
 
-1. An engaging, detailed description (MAX 500 characters) highlighting:
-   - What makes this game interesting for players
-   - Key gameplay features and mechanics
-   - The gaming experience it offers
-   - What makes it unique or popular
-   - Target audience
+1. A comprehensive, well-formatted description (MAX 1200 characters) with the following structure:
+
+**Overview** (2-3 sentences): What is the game and why is it notable?
+
+**Gameplay** (3-4 sentences): Core mechanics, game modes, player experience. Be specific about what players actually do.
+
+**Features** (2-3 sentences): Key features that make it unique - multiplayer, progression systems, customization, etc.
+
+**Community & Appeal** (1-2 sentences): Who plays it, what makes it popular, target audience.
 
 2. The most appropriate category from the available list
 ${sonarSection}
@@ -376,16 +379,18 @@ Available categories:
 ${categoriesList}
 
 IMPORTANT:
-- Description should be EXACTLY 500 characters (use the full limit!)
+- Description should be close to 1200 characters (use the space!)
+- Use the markdown format with **bold headers** as shown above
 - Make it exciting, informative, and player-focused
 - Prioritize information from Perplexity Sonar (if available) as it's most accurate
 - Extract real facts from the content, don't make things up
-- Be specific about gameplay and features
+- Be specific about gameplay mechanics and features
+- Write in engaging, natural language
 - If you can't determine a category, set it to null
 
 Respond in JSON format:
 {
-  "description": "Your engaging description here (exactly 500 chars)",
+  "description": "Your formatted description here (use markdown, ~1200 chars)",
   "categorySlug": "category_value_here or null"
 }`;
 
@@ -409,7 +414,7 @@ Respond in JSON format:
           },
         ],
         temperature: 0.7,
-        max_tokens: 600,
+        max_tokens: 1500,
       }),
     });
 
@@ -433,7 +438,7 @@ Respond in JSON format:
     const parsed = JSON.parse(jsonMatch[0]);
 
     // Ensure description is within limit
-    const description = parsed.description?.slice(0, 500) || scrapedData.rawDescription.slice(0, 500);
+    const description = parsed.description?.slice(0, 1200) || scrapedData.rawDescription.slice(0, 1200);
 
     console.log(`  ✓ AI analysis complete`);
 
@@ -446,7 +451,7 @@ Respond in JSON format:
     console.log("  ↪️  Using fallback description");
 
     return {
-      description: scrapedData.rawDescription.slice(0, 500),
+      description: scrapedData.rawDescription.slice(0, 1200),
       categorySlug: null,
     };
   }
