@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/constants";
 
-const PUBLIC_PATHS = ["/", "/auth/callback", "/auth/login", "/games", "/privacy-policy", "/terms-of-use"];
+const PUBLIC_PATHS = ["/", "/auth/callback", "/auth/login", "/games", "/profile", "/privacy-policy", "/terms-of-use"];
 
 export default function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
