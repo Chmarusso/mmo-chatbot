@@ -8,6 +8,7 @@ const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 interface ScrapedGameData {
   title: string;
   rawDescription: string;
+  sonarInfo: string;
   website: string;
   screenshot: string;
   genres: string[];
@@ -141,6 +142,60 @@ async function searchReddit(gameTitle: string): Promise<string> {
 }
 
 /**
+ * Search using Perplexity Sonar for real-time game information
+ */
+async function searchWithSonar(gameTitle: string): Promise<string> {
+  if (!OPENROUTER_KEY) {
+    console.log(`  ⚠️  Skipping Sonar search (no OpenRouter key)`);
+    return "";
+  }
+
+  console.log(`  🔮 Searching with Perplexity Sonar...`);
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "HTTP-Referer": APP_URL,
+        "X-Title": "MMOPLAYA Game Agent",
+      },
+      body: JSON.stringify({
+        model: "perplexity/sonar",
+        messages: [
+          {
+            role: "user",
+            content: `Search for comprehensive information about the video game "${gameTitle}". Include: official website, release date, genres, platforms, key gameplay features, and what makes it unique. Focus on factual information from reliable gaming sources.`,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`  ⚠️  Sonar search failed: ${response.status}`);
+      return "";
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content?.trim();
+
+    if (!content) {
+      console.warn(`  ⚠️  No response from Sonar`);
+      return "";
+    }
+
+    console.log(`  ✓ Sonar found comprehensive game information`);
+    return content;
+  } catch (error) {
+    console.error(`  ❌ Sonar search error:`, error);
+    return "";
+  }
+}
+
+/**
  * Scrape a website for game information
  */
 async function scrapeWebsite(url: string): Promise<{ text: string; screenshot: string }> {
@@ -190,15 +245,18 @@ async function scrapeWebsite(url: string): Promise<{ text: string; screenshot: s
 async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null> {
   console.log(`\n📡 Gathering information from the web...\n`);
 
-  // Step 1: Search Google for relevant URLs
+  // Step 1: Search with Perplexity Sonar for comprehensive info
+  const sonarInfo = await searchWithSonar(gameTitle);
+
+  // Step 2: Search Google for relevant URLs
   const urls = await searchGoogle(gameTitle);
 
-  if (urls.length === 0) {
+  if (urls.length === 0 && !sonarInfo) {
     console.error("❌ Could not find any relevant sources");
     return null;
   }
 
-  // Step 2: Search Reddit for community insights
+  // Step 3: Search Reddit for community insights
   const redditInsights = await searchReddit(gameTitle);
 
   // Step 3: Scrape multiple sources
@@ -239,7 +297,7 @@ async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null
 
   console.log(`\n  ✓ Scraped ${sources.length} sources successfully`);
 
-  if (!combinedDescription) {
+  if (!combinedDescription && !sonarInfo) {
     console.error("❌ Could not extract meaningful information");
     return null;
   }
@@ -247,6 +305,7 @@ async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null
   return {
     title: gameTitle,
     rawDescription: combinedDescription.slice(0, 5000), // Limit for AI processing
+    sonarInfo: sonarInfo.slice(0, 2000), // Limit Sonar info
     website: officialWebsite || urls[0] || "",
     screenshot,
     genres: [],
@@ -274,7 +333,11 @@ async function analyzeGameWithAI(
     .map((cat) => `- ${cat.value}: ${cat.label}`)
     .join("\n");
 
-  const prompt = `You are a game database curator. Based on the scraped web content and Reddit discussions about "${scrapedData.title}", create:
+  const sonarSection = scrapedData.sonarInfo
+    ? `\n\nPerplexity Sonar Research (most reliable):\n${scrapedData.sonarInfo}\n`
+    : "";
+
+  const prompt = `You are a game database curator. Based on multiple sources of information about "${scrapedData.title}", create:
 
 1. An engaging, concise description (MAX 480 characters) highlighting:
    - What makes this game interesting for players
@@ -282,8 +345,8 @@ async function analyzeGameWithAI(
    - The gaming experience it offers
 
 2. The most appropriate category from the available list
-
-Web Content & Player Insights:
+${sonarSection}
+Web Scraped Content:
 ${scrapedData.rawDescription}
 
 Available categories:
@@ -292,6 +355,7 @@ ${categoriesList}
 IMPORTANT:
 - Description must be EXACTLY 480 characters or less
 - Make it exciting and player-focused
+- Prioritize information from Perplexity Sonar (if available) as it's most accurate
 - Extract real facts from the content, don't make things up
 - If you can't determine a category, set it to null
 
@@ -440,13 +504,14 @@ async function main() {
     console.log("Usage: pnpm add-game <game title>");
     console.log("\nExample: pnpm add-game 'World of Warcraft'");
     console.log("\nOptional environment variables:");
-    console.log("  OPENROUTER_API_KEY - For AI-enhanced descriptions");
+    console.log("  OPENROUTER_API_KEY - For Perplexity Sonar & AI-enhanced descriptions");
     console.log("\nThis script will:");
-    console.log("  1. Search Google for game information");
-    console.log("  2. Search Reddit for player insights");
-    console.log("  3. Scrape relevant websites");
-    console.log("  4. Use AI to create engaging description");
-    console.log("  5. Add game to database");
+    console.log("  1. Search with Perplexity Sonar (real-time web search)");
+    console.log("  2. Search Google for game information");
+    console.log("  3. Search Reddit for player insights");
+    console.log("  4. Scrape relevant websites");
+    console.log("  5. Use AI to create engaging description");
+    console.log("  6. Add game to database");
     process.exit(1);
   }
 
