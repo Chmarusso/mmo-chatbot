@@ -110,7 +110,7 @@ async function searchGameplayImage(gameTitle: string): Promise<string> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        q: `${gameTitle} gameplay 2025`,
+        q: `${gameTitle} screenshotgameplay 2025`,
         num: 10,
       }),
     });
@@ -493,13 +493,33 @@ Respond in JSON format:
       throw new Error("No response from AI");
     }
 
-    // Extract JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not parse AI response");
+    // Extract JSON from response - handle markdown code blocks
+    let jsonString = content;
+
+    // Remove markdown code blocks if present
+    if (content.includes("```json")) {
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonString = jsonMatch[1];
+      }
+    } else if (content.includes("```")) {
+      const jsonMatch = content.match(/```\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonString = jsonMatch[1];
+      }
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    // Extract just the JSON object
+    const objectMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (!objectMatch) {
+      throw new Error("Could not find JSON object in AI response");
+    }
+
+    // Clean up control characters that break JSON parsing (except newlines and tabs in strings)
+    const cleanedJson = objectMatch[0]
+      .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, " "); // Replace control chars with space
+
+    const parsed = JSON.parse(cleanedJson);
 
     // Ensure description is within limit
     const description = parsed.description?.slice(0, 1200) || scrapedData.rawDescription.slice(0, 1200);
