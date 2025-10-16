@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+const SERPER_API_KEY = process.env.SERPER_API_KEY ?? "e5e0cb6d3ff90fe8ad121fbb9fccb01cae19cd23";
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 
 interface ScrapedGameData {
@@ -38,40 +39,40 @@ function extractTextFromHtml(html: string): string {
 }
 
 /**
- * Search Google for game information
+ * Search using Serper.dev API for game information
  */
 async function searchGoogle(gameTitle: string): Promise<string[]> {
-  console.log(`  🔍 Searching Google for: "${gameTitle}"`);
-
-  const searchQuery = encodeURIComponent(`${gameTitle} game official website`);
-  const searchUrl = `https://www.google.com/search?q=${searchQuery}`;
+  console.log(`  🔍 Searching Google (via Serper) for: "${gameTitle}"`);
 
   try {
-    const response = await fetch(searchUrl, {
+    const response = await fetch("https://google.serper.dev/search", {
+      method: "POST",
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
+        "X-API-KEY": SERPER_API_KEY,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        q: `${gameTitle} game official website`,
+        num: 10,
+      }),
     });
 
     if (!response.ok) {
-      console.warn(`  ⚠️  Google search failed: ${response.status}`);
+      console.warn(`  ⚠️  Serper search failed: ${response.status}`);
       return [];
     }
 
-    const html = await response.text();
+    const data = await response.json();
+    const results = data?.organic || [];
 
     // Extract URLs from search results
-    const urlPattern = /https?:\/\/[^\s"<>]+/g;
-    const urls = html.match(urlPattern) || [];
+    const urls = results.map((result: any) => result.link).filter(Boolean);
 
     // Filter for relevant game websites
     const relevantUrls = urls
-      .filter((url) => {
+      .filter((url: string) => {
         const lower = url.toLowerCase();
         return (
-          !lower.includes("google.com") &&
           !lower.includes("youtube.com") &&
           !lower.includes("facebook.com") &&
           !lower.includes("twitter.com") &&
@@ -89,7 +90,7 @@ async function searchGoogle(gameTitle: string): Promise<string[]> {
     console.log(`  ✓ Found ${relevantUrls.length} potential sources`);
     return relevantUrls;
   } catch (error) {
-    console.error(`  ❌ Google search error:`, error);
+    console.error(`  ❌ Serper search error:`, error);
     return [];
   }
 }
@@ -497,9 +498,9 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
       data: {
         label: gameData.title,
         description: gameData.description,
-        screenshot: gameData.screenshot || null,
-        website: gameData.website || null,
-        categoryId: categoryId || null,
+        screenshot: gameData.screenshot || existing.screenshot,
+        website: gameData.website || existing.website,
+        categoryId: categoryId || existing.categoryId,
       },
     });
 
@@ -534,13 +535,14 @@ async function main() {
     console.log("\nExample: pnpm add-game 'World of Warcraft'");
     console.log("\nOptional environment variables:");
     console.log("  OPENROUTER_API_KEY - For Perplexity Sonar & AI-enhanced descriptions");
+    console.log("  SERPER_API_KEY - For Google search (defaults to built-in key)");
     console.log("\nThis script will:");
     console.log("  1. Search with Perplexity Sonar (real-time web search)");
-    console.log("  2. Search Google for game information");
+    console.log("  2. Search Google via Serper.dev API for game information");
     console.log("  3. Search Reddit for player insights");
     console.log("  4. Scrape relevant websites");
     console.log("  5. Use AI to create engaging description");
-    console.log("  6. Add game to database");
+    console.log("  6. Add or update game in database");
     process.exit(1);
   }
 
