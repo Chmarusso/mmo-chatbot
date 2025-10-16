@@ -117,7 +117,7 @@ model GameCategory {
 model Game {
   value       String        @id @db.VarChar(64)
   label       String        @db.VarChar(128)
-  description String?       @db.VarChar(1200)
+  description String?       @db.VarChar(5000)
   screenshot  String?       @db.VarChar(500)
   website     String?       @db.VarChar(500)
   categoryId  String?

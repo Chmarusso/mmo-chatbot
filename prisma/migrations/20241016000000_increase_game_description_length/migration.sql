@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Game" ALTER COLUMN "description" TYPE VARCHAR(1200);
+ALTER TABLE "Game" ALTER COLUMN "description" TYPE VARCHAR(5000);
