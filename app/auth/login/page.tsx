@@ -76,36 +76,51 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const greeting = getLocalizedGreeting(headerList.get("accept-language"));
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6">
-      <section className="w-full max-w-md space-y-6">
-        <header className="space-y-2 text-center">
-          <Link href="/" aria-label="Go to MMOPLAYA home" className="mb-4 flex justify-center">
-            <img
-              src="/mmoplaya-logo.png"
-              alt="MMOPLAYA logo"
-              className="h-10 w-auto"
-            />
-          </Link>
-          <p className="text-xl font-medium text-accent-cyan">{greeting}</p>
-          <p className="text-sm text-text-secondary">
-            Enter your email to receive code or login link. <br/>No passwords required.
-          </p>
-          {error && (
-            <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
-              Something went wrong. Please request a new link.
+    <main className="flex min-h-screen flex-col bg-background">
+      {/* Logo at top on mobile, centered on all screens */}
+      <div className="flex justify-center px-6 pt-8 lg:pt-0">
+        <Link href="/" aria-label="Go to MMOPLAYA home" className="lg:hidden">
+          <img
+            src="/mmoplaya-logo.png"
+            alt="MMOPLAYA logo"
+            className="h-10 w-auto"
+          />
+        </Link>
+      </div>
+
+      {/* Main content centered */}
+      <div className="flex flex-1 items-center justify-center px-6 pb-8 lg:pb-0">
+        <section className="w-full max-w-md space-y-6">
+          <header className="space-y-2 text-center">
+            {/* Logo on desktop only */}
+            <Link href="/" aria-label="Go to MMOPLAYA home" className="mb-4 hidden justify-center lg:flex">
+              <img
+                src="/mmoplaya-logo.png"
+                alt="MMOPLAYA logo"
+                className="h-10 w-auto"
+              />
+            </Link>
+            <p className="text-xl font-medium text-accent-cyan">{greeting}</p>
+            <p className="text-sm text-text-secondary">
+              Enter your email to receive code or login link. <br/>No passwords required.
             </p>
-          )}
-        </header>
-        <div className="rounded-2xl border border-accent-purple/40 bg-surface/90 p-6 shadow-lg">
-          <AuthForm redirectPath={redirectPath} />
-        </div>
-        <p className="text-center text-xs text-text-tertiary">
-          Need help? Email{" "}
-          <a className="text-accent-cyan transition hover:text-white" href="mailto:artur@mmoplaya.net">
-            artur@mmoplaya.net
-          </a>
-        </p>
-      </section>
+            {error && (
+              <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                Something went wrong. Please request a new link.
+              </p>
+            )}
+          </header>
+          <div className="rounded-2xl border border-accent-purple/40 bg-surface/90 p-6 shadow-lg">
+            <AuthForm redirectPath={redirectPath} />
+          </div>
+          <p className="text-center text-xs text-text-tertiary">
+            Need help? Email{" "}
+            <a className="text-accent-cyan transition hover:text-white" href="mailto:artur@mmoplaya.net">
+              artur@mmoplaya.net
+            </a>
+          </p>
+        </section>
+      </div>
     </main>
   );
 }

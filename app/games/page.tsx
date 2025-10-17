@@ -64,14 +64,9 @@ export default async function GamesPage() {
               <div className="flex flex-1 flex-col p-4">
                 <h2 className="text-lg font-semibold text-white mb-2">{game.label}</h2>
                 {game.category && (
-                  <Badge variant="secondary" className="mb-2 w-fit text-xs">
+                  <Badge variant="secondary" className="w-fit text-xs">
                     {game.category.label}
                   </Badge>
-                )}
-                {game.description && (
-                  <p className="mt-auto line-clamp-3 text-xs text-text-secondary">
-                    {game.description}
-                  </p>
                 )}
               </div>
             </Link>

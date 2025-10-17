@@ -143,12 +143,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   </div>
                 )}
                 <div className="flex flex-1 flex-col p-4">
-                  <h2 className="text-lg font-semibold text-white mb-2">{game.label}</h2>
-                  {game.description && (
-                    <p className="mt-auto line-clamp-3 text-xs text-text-secondary">
-                      {game.description}
-                    </p>
-                  )}
+                  <h2 className="text-lg font-semibold text-white">{game.label}</h2>
                 </div>
               </article>
             </Link>

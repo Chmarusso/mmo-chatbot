@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/constants";
 
-const PUBLIC_PATHS = ["/", "/auth/callback", "/auth/login", "/games", "/profile", "/privacy-policy", "/terms-of-use"];
+const PUBLIC_PATHS = ["/", "/auth/callback", "/auth/login", "/games", "/privacy-policy", "/terms-of-use"];
 
 export default function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -11,8 +11,11 @@ export default function middleware(req: NextRequest) {
   if (pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
-  
-  const isPublic = PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
+  // Allow public access to individual profile pages (/profile/{id}) but not /profile itself
+  const isPublicProfile = /^\/profile\/[^\/]+$/.test(pathname);
+
+  const isPublic = isPublicProfile || PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const hasSession = Boolean(req.cookies.get(SESSION_COOKIE_NAME)?.value);
 
   if (!hasSession && !isPublic) {

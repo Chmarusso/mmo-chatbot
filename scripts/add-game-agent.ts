@@ -13,6 +13,7 @@ interface ScrapedGameData {
   sonarInfo: string;
   website: string;
   screenshot: string;
+  gameplayImages: string[]; // Array of gameplay images for fallback
   genres: string[];
   platforms: string[];
   releaseDate?: string;
@@ -98,8 +99,9 @@ async function searchGoogle(gameTitle: string): Promise<string[]> {
 
 /**
  * Search for gameplay images using Serper.dev image search
+ * Returns array of valid image URLs
  */
-async function searchGameplayImage(gameTitle: string): Promise<string> {
+async function searchGameplayImage(gameTitle: string): Promise<string[]> {
   console.log(`  🖼️  Searching for gameplay images...`);
 
   try {
@@ -110,14 +112,14 @@ async function searchGameplayImage(gameTitle: string): Promise<string> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        q: `${gameTitle} screenshotgameplay 2025`,
-        num: 10,
+        q: `${gameTitle} screenshot gameplay 2025`,
+        num: 20, // Get more results for fallback options
       }),
     });
 
     if (!response.ok) {
       console.warn(`  ⚠️  Image search failed: ${response.status}`);
-      return "";
+      return [];
     }
 
     const data = await response.json();
@@ -125,30 +127,34 @@ async function searchGameplayImage(gameTitle: string): Promise<string> {
 
     if (images.length === 0) {
       console.log(`  ⚠️  No gameplay images found`);
-      return "";
+      return [];
     }
 
-    // Filter out YouTube thumbnails and find first valid image
-    const validImages = images.filter((img: any) => {
-      const url = img?.imageUrl || "";
-      return url && !url.includes("i.ytimg.com");
-    });
+    // Filter out YouTube thumbnails and other unwanted sources
+    const validImages = images
+      .filter((img: any) => {
+        const url = img?.imageUrl || "";
+        return (
+          url &&
+          !url.includes("i.ytimg.com") &&
+          !url.includes("ytimg.com") &&
+          !url.includes("youtube.com") &&
+          !url.includes("data:image") && // Skip data URIs
+          (url.startsWith("http://") || url.startsWith("https://"))
+        );
+      })
+      .map((img: any) => img.imageUrl);
 
     if (validImages.length === 0) {
-      console.log(`  ⚠️  No valid gameplay images found (filtered out YouTube thumbnails)`);
-      return "";
+      console.log(`  ⚠️  No valid gameplay images found after filtering`);
+      return [];
     }
 
-    const imageUrl = validImages[0]?.imageUrl || "";
-
-    if (imageUrl) {
-      console.log(`  ✓ Found gameplay image`);
-    }
-
-    return imageUrl;
+    console.log(`  ✓ Found ${validImages.length} gameplay images`);
+    return validImages;
   } catch (error) {
     console.error(`  ❌ Image search error:`, error);
-    return "";
+    return [];
   }
 }
 
@@ -376,10 +382,15 @@ async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null
 
   console.log(`\n  ✓ Scraped ${sources.length} sources successfully`);
 
-  // If no screenshot found from scraping, search for gameplay images
-  if (!screenshot) {
-    console.log(`\n  📸 No screenshot found in scraped sources, searching for gameplay images...`);
-    screenshot = await searchGameplayImage(gameTitle);
+  // Always search for gameplay images - they're more representative than og:image tags
+  console.log(`\n  📸 Searching for gameplay images...`);
+  const gameplayImages = await searchGameplayImage(gameTitle);
+
+  // Prefer gameplay image over scraped screenshot (og:image is often just a logo)
+  if (gameplayImages.length > 0) {
+    screenshot = gameplayImages[0]; // Will try fallbacks during upload
+  } else if (screenshot) {
+    console.log(`  ↪️  Using scraped screenshot as fallback`);
   }
 
   if (!combinedDescription && !sonarInfo) {
@@ -393,6 +404,7 @@ async function gatherGameInfo(gameTitle: string): Promise<ScrapedGameData | null
     sonarInfo: sonarInfo.slice(0, 2000), // Limit Sonar info
     website: officialWebsite || urls[0] || "",
     screenshot,
+    gameplayImages, // Include full array for fallback during upload
     genres: [],
     platforms: [],
     sources,
@@ -643,24 +655,59 @@ async function main() {
   // Step 3: Analyze with AI
   const analysis = await analyzeGameWithAI(scrapedData, categories);
 
-  // Step 4: Upload screenshot to Supabase if we have one
-  let uploadedScreenshotUrl = scrapedData.screenshot;
-  if (scrapedData.screenshot && !scrapedData.screenshot.includes("supabase.co")) {
-    console.log(`\n📤 Uploading screenshot to Supabase...`);
-    try {
-      const slug = createSlug(gameTitle);
-      const ext = scrapedData.screenshot.split(".").pop()?.split("?")[0] || "jpg";
-      const filename = `${slug}-${Date.now()}.${ext}`;
-      uploadedScreenshotUrl = await downloadAndUploadToSupabase(
-        scrapedData.screenshot,
-        "game-screenshots",
-        filename
-      );
-      console.log(`  ✓ Screenshot uploaded successfully`);
-    } catch (error) {
-      console.error(`  ⚠️  Failed to upload screenshot, using original URL:`, error);
-      uploadedScreenshotUrl = scrapedData.screenshot;
+  // Step 4: Download and upload screenshot to Supabase with fallback logic
+  let uploadedScreenshotUrl = "";
+
+  // Build list of images to try (gameplay images first, then scraped screenshot)
+  const imagesToTry = [...scrapedData.gameplayImages];
+  if (scrapedData.screenshot && !scrapedData.gameplayImages.includes(scrapedData.screenshot)) {
+    imagesToTry.push(scrapedData.screenshot);
+  }
+
+  if (imagesToTry.length > 0) {
+    console.log(`\n📤 Downloading and uploading screenshot (${imagesToTry.length} candidates)...`);
+
+    const slug = createSlug(gameTitle);
+    let attemptNum = 0;
+
+    for (const imageUrl of imagesToTry) {
+      attemptNum++;
+
+      // Skip if already uploaded to Supabase
+      if (imageUrl.includes("supabase.co")) {
+        console.log(`  ${attemptNum}. Already on Supabase, using existing URL`);
+        uploadedScreenshotUrl = imageUrl;
+        break;
+      }
+
+      console.log(`  ${attemptNum}. Downloading: ${imageUrl.slice(0, 60)}...`);
+
+      try {
+        const ext = imageUrl.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
+        const filename = `${slug}-${Date.now()}-${attemptNum}.${ext}`;
+
+        // Download and upload (with validation inside downloadAndUploadToSupabase)
+        uploadedScreenshotUrl = await downloadAndUploadToSupabase(
+          imageUrl,
+          "game-screenshots",
+          filename
+        );
+        console.log(`  ✓ Downloaded and uploaded successfully`);
+        break; // Success! Stop trying other images
+      } catch (error) {
+        console.error(`  ✗ Failed (${error instanceof Error ? error.message : String(error)})`);
+
+        // If this was the last image, give up
+        if (attemptNum === imagesToTry.length) {
+          console.warn(`  ⚠️  All ${imagesToTry.length} images failed, no screenshot will be saved`);
+          uploadedScreenshotUrl = "";
+        } else {
+          console.log(`  ↪️  Trying next image...`);
+        }
+      }
     }
+  } else {
+    console.log(`\n⚠️  No screenshots found to upload`);
   }
 
   // Step 5: Prepare game data

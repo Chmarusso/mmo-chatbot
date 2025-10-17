@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile } from "@/lib/profile";
+import { classifyIntent } from "@/lib/intent-detection";
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const COMPANION_MODEL = process.env.COMPANION_MODEL ?? "anthropic/claude-3.5-haiku";
@@ -75,6 +76,11 @@ export async function GET() {
     role: message.role.toLowerCase(),
     content: message.content,
     createdAt: message.createdAt.toISOString(),
+    ...(message.intent && {
+      intent: message.intent,
+      intentConfidence: message.intentConfidence,
+      intentEntities: message.intentEntities,
+    }),
   }));
 
   return NextResponse.json({ messages, profile: profileSnapshot });
@@ -125,11 +131,17 @@ export async function POST(request: Request) {
   let userMessageRecord: { id: string; createdAt: Date; content: string } | null = null;
 
   try {
+    // Detect intent for user message
+    const intentResult = await classifyIntent(message);
+
     userMessageRecord = await prisma.aiMessage.create({
       data: {
         conversationId: conversation.id,
         role: "USER",
         content: message,
+        intent: intentResult.intent,
+        intentConfidence: intentResult.confidence,
+        intentEntities: intentResult.entities,
       },
     });
 
@@ -194,6 +206,11 @@ export async function POST(request: Request) {
       },
     });
 
+    // Fetch the complete user message with intent data
+    const completeUserMessage = await prisma.aiMessage.findUnique({
+      where: { id: userMessageRecord.id },
+    });
+
     return NextResponse.json({
       messages: [
         {
@@ -201,6 +218,11 @@ export async function POST(request: Request) {
           role: "user",
           content: message,
           createdAt: userMessageRecord.createdAt.toISOString(),
+          ...(completeUserMessage?.intent && {
+            intent: completeUserMessage.intent,
+            intentConfidence: completeUserMessage.intentConfidence,
+            intentEntities: completeUserMessage.intentEntities,
+          }),
         },
         {
           id: assistantMessage.id,

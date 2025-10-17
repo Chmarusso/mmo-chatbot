@@ -113,7 +113,7 @@ export default async function ProfileViewPage({ params }: ProfilePageProps) {
             This profile is invite-only!
           </h2>
           <p className="mb-6 text-base text-text-secondary">
-            Want to see {profile.name}'s epic gaming setup, favorite games, and when they're online?
+            Want to see {profile.name}&apos;s epic gaming setup, favorite games, and when they&apos;re online?
             Join MMOPLAYA to unlock the full squad experience! 🚀
           </p>
           <a

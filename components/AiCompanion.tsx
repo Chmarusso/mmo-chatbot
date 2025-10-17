@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/chat";
 import type { AiMessage, AiCompanionProfileSnapshot } from "@/types/ai";
 import { GAME_OPTIONS, PLAYSTYLES, TIME_SLOTS } from "@/types/profile";
+import { GameRecommendationCard } from "@/components/GameRecommendationCard";
 
 const FETCH_INTERVAL_MS = 45_000;
 
@@ -261,22 +262,33 @@ export function AiCompanion() {
 
           {messages.map((msg) => (
             <ChatBubble key={msg.id} variant={msg.role === "user" ? "sent" : "received"}>
-              <div className="flex flex-col">
-                <ChatBubbleMessage variant={msg.role === "user" ? "sent" : "received"}>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {msg.isThinking ? (
-                      <span className="inline-flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin text-accent-cyan" />
-                        Thinking…
-                      </span>
-                    ) : (
-                      msg.content
-                    )}
-                  </p>
-                </ChatBubbleMessage>
-                <ChatBubbleTimestamp>
-                  {msg.role === "user" ? "You" : "Companion"} · {formatRelativeTime(msg.createdAt)}
-                </ChatBubbleTimestamp>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col">
+                  <ChatBubbleMessage variant={msg.role === "user" ? "sent" : "received"}>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {msg.isThinking ? (
+                        <span className="inline-flex items-center gap-2 text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin text-accent-cyan" />
+                          Thinking…
+                        </span>
+                      ) : (
+                        msg.content
+                      )}
+                    </p>
+                  </ChatBubbleMessage>
+                  <ChatBubbleTimestamp>
+                    {msg.role === "user" ? "You" : "Companion"} · {formatRelativeTime(msg.createdAt)}
+                  </ChatBubbleTimestamp>
+                </div>
+
+                {/* Render game recommendation cards if present */}
+                {msg.recommendedGames && msg.recommendedGames.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {msg.recommendedGames.map((game) => (
+                      <GameRecommendationCard key={game.value} game={game} />
+                    ))}
+                  </div>
+                )}
               </div>
             </ChatBubble>
           ))}

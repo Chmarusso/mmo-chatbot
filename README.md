@@ -5,10 +5,11 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
 ## Features
 - Passwordless login flow that emails (or logs) six-digit OTP codes and magic links.
 - Guided profile builder with avatar uploads, MMO preference enums, social links, timezone hints, and locale-aware language defaults.
-- Multi-slot scheduling so players can advertise every window they’re usually online.
+- Multi-slot scheduling so players can advertise every window they're usually online.
 - Swipe deck that filters candidates by shared MMO and language, with instant toast on mutual matches.
 - Matches list and polling chat room so new messages appear without a page refresh.
-- Personal AI companion that helps plan raids, builds, and play schedules using LLM responses.
+- Personal AI companion that helps plan raids, builds, and play schedules using LLM responses with intelligent intent detection.
+- Game embeddings for semantic search enabling similarity-based recommendations and natural language game discovery.
 - Invite-gated matches and companion experiences that unlock once a profile supplies a valid invite code.
 - Dark/light theme support with system default preference saved to user profile.
 - Games directory with individual game pages featuring screenshots, descriptions, official website links, star ratings, community comments, and player listings.
@@ -39,6 +40,7 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
 - pnpm 8+ (recommended; swap commands for npm/yarn if preferred)
 - PostgreSQL database (local Docker or hosted)
 - SMTP credentials for transactional mail (development can fall back to console logging)
+- OpenAI API key (optional, for AI companion intent detection)
 
 ## Quick Start
 1. **Install dependencies**
@@ -62,9 +64,11 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
    OPENROUTER_API_KEY="sk-or-..."         # required for LLM-based moderation
    MODERATION_MODEL="openrouter/auto"     # optional override
    COMPANION_MODEL="anthropic/claude-3.5-haiku"  # optional override for the AI companion
+   OPENAI_API_KEY="sk-..."                # optional, for intent detection (uses fallback regex if missing)
   ```
    - If SMTP is omitted, OTP codes and magic links are printed to the server logs for local testing.
    - Use port `465` for implicit TLS; the mailer auto-selects secure mode.
+   - If `OPENAI_API_KEY` is not provided, the AI companion will use a regex-based fallback for intent detection.
 
 3. **Set up the database**
    ```bash
@@ -165,6 +169,48 @@ scripts/                 Maintenance utilities (guild code generator)
 tests/e2e/               Playwright scenarios
 ```
 
+## AI & Semantic Search Features
+
+### Intent Detection
+The AI companion automatically classifies user messages to understand what players want:
+- **find_similar_games**: User wants games similar to a specific game
+- **recommend_by_preference**: User wants recommendations based on their preferences
+- **compare_games**: User wants to compare multiple games
+- **my_games**: User asks about their current game list
+- **trending_games**: User wants to know what's popular
+- **game_info**: User wants detailed information about a specific game
+- **category_browse**: User wants to browse games in a category
+- **general_chat**: General conversation
+
+Intent detection uses GPT-4o-mini for accurate classification with entity extraction (game names, categories, playstyles, keywords). If OpenAI is unavailable, the system falls back to regex-based pattern matching. All intents are stored in the database for analytics and feature improvements.
+
+### Game Embeddings (Semantic Search)
+Game embeddings enable intelligent game discovery beyond keyword matching:
+- Each game has a 1536-dimension vector embedding generated from its description
+- Enables semantic similarity search ("games like World of Warcraft")
+- Powers natural language recommendations in the AI companion
+- Uses OpenAI's text-embedding-3-small model for consistent, high-quality embeddings
+- Stored in PostgreSQL with pgvector extension for fast nearest-neighbor queries
+
+**Note**: The pgvector extension is required for full embedding functionality. Without it, the system will store metadata fields but not perform semantic searches.
+
+#### Generate Game Embeddings
+To populate embeddings for your game library:
+
+```bash
+# Generate embeddings for all games without them
+pnpm tsx scripts/generate-game-embeddings.ts
+
+# Verify embedding coverage
+pnpm tsx scripts/verify-embeddings.ts
+```
+
+The embedding generator:
+- Processes games in batches to respect rate limits
+- Tracks generation timestamps and model versions
+- Skips games that already have embeddings
+- Shows progress and estimates remaining time
+
 ## Core Application Flow
 - **Login**: `/api/auth/request-otp` hashes the OTP, stores it with expiry, and emails (or logs) the code plus magic link. `/auth/callback` verifies the code and issues a session cookie stored under `mmo_match_session`.
 - **Profiles**: `lib/profile.ts` ensures every authenticated user has a profile row. Preference enums mirror the options rendered in the UI to keep data constrained, and the `isVerified` flag gates guild creation. Profile includes theme preference (light/dark/system) for UI customization.
@@ -181,6 +227,7 @@ tests/e2e/               Playwright scenarios
 - **Retention**: One-to-one and guild chats automatically discard messages older than 30 days to keep storage lean.
 - **Matchmaking**: The dashboard fetches profiles that match the current user’s game, language, playstyle, and time slot. Swipes record `yes`/`no` decisions and promote to `Match` records when both parties say yes.
 - **Chat**: `/api/messages/[matchId]` exposes GET/POST endpoints. The client polls every few seconds for new messages to keep dependencies light.
+- **AI Companion**: `/api/ai-chat` handles companion interactions. Each user message is automatically classified for intent (find games, compare, recommend, etc.) using GPT-4o-mini or regex fallback. Intent data is stored alongside messages for analytics and can power future smart recommendations.
 - **Account management**: `/api/auth/logout` clears the session token. `/api/account` cascades deletion through user-owned records, then removes the session cookie.
 
 ## Deployment Notes

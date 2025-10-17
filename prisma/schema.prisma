@@ -123,6 +123,12 @@ model Game {
   screenshot  String?       @db.VarChar(500)
   website     String?       @db.VarChar(500)
   categoryId  String?
+
+  // Vector embedding fields for semantic search
+  embedding   Unsupported("vector(1536)")?
+  embeddingModel String?    @db.VarChar(50)
+  embeddingGeneratedAt DateTime?
+
   category    GameCategory? @relation("GameCategory", fields: [categoryId], references: [id], onDelete: SetNull)
   profiles    Profile[]     @relation("ProfileGame")
   ratings     GameRating[]
@@ -130,6 +136,7 @@ model Game {
   websiteClicks GameWebsiteClick[]
 
   @@index([categoryId])
+  @@index([embeddingGeneratedAt])
 }
 
 model GameWebsiteClick {
@@ -448,11 +455,18 @@ model AiMessage {
   conversationId  String
   role            AiMessageRole
   content         String        @db.Text
+
+  // Intent detection fields (only for USER messages)
+  intent          String?       @db.VarChar(64)
+  intentConfidence Float?
+  intentEntities  Json?
+
   createdAt       DateTime      @default(now())
 
   conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+  @@index([intent])
 }
 
 enum PaymentStatus {
