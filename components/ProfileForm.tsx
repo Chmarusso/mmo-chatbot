@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Profile, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
+import { Profile, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { AvatarUploader } from "@/components/AvatarUploader";
 import { cn } from "@/lib/utils";
+import { useGameOptions } from "@/lib/hooks/useGameOptions";
 
 const BROWSER_LANGUAGE_MAP: Record<string, string> = {
   en: "english",
@@ -67,6 +68,9 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? null);
   const [step, setStep] = useState(0);
+  const { data: gameOptions } = useGameOptions();
+  const [isGameSelectOpen, setIsGameSelectOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleAvatarUpload = (url: string | null) => {
     setAvatarUrl(url);
@@ -76,14 +80,36 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
   };
   const [gameSearch, setGameSearch] = useState("");
   const sortedGames = useMemo(
-    () => [...GAME_OPTIONS].sort((a, b) => a.label.localeCompare(b.label)),
-    []
+    () => [...gameOptions].sort((a, b) => a.label.localeCompare(b.label)),
+    [gameOptions]
   );
   const filteredGames = useMemo(() => {
     const query = gameSearch.trim().toLowerCase();
     if (!query) return sortedGames;
     return sortedGames.filter((option) => option.label.toLowerCase().includes(query));
   }, [sortedGames, gameSearch]);
+
+  useEffect(() => {
+    if (!isGameSelectOpen) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const input = searchInputRef.current;
+      if (!input) {
+        return;
+      }
+      if (document.activeElement !== input) {
+        input.focus();
+      }
+      if (typeof input.setSelectionRange === "function") {
+        const length = input.value.length;
+        input.setSelectionRange(length, length);
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [isGameSelectOpen]);
 
   useEffect(() => {
     if (profile.language || formState.language) {
@@ -246,6 +272,7 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
             <Select
               value={formState.gamePref || undefined}
               onOpenChange={(open) => {
+                setIsGameSelectOpen(open);
                 if (!open) {
                   setGameSearch("");
                 }
@@ -261,6 +288,7 @@ export function ProfileForm({ profile, onUpdated }: ProfileFormProps) {
               <SelectContent>
                 <div className="p-2">
                   <Input
+                    ref={searchInputRef}
                     value={gameSearch}
                     onChange={(event) => setGameSearch(event.target.value)}
                     placeholder="Search games..."

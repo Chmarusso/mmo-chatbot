@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types/profile";
-import { preferenceLabel, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
+import { preferenceLabel, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
 import { cn } from "@/lib/utils";
 import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
+import { useGameOptions } from "@/lib/hooks/useGameOptions";
 
 interface SwipeCardProps {
   profile: Profile;
@@ -23,6 +24,7 @@ const cardVariants = {
 };
 
 export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) {
+  const { data: gameOptions } = useGameOptions();
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.x > 120) {
       onSwipe("yes");
@@ -77,7 +79,7 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
               className="inline-flex items-center rounded-full bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
               onClick={(e) => e.stopPropagation()}
             >
-              {preferenceLabel(profile.gamePref, GAME_OPTIONS)}
+              {preferenceLabel(profile.gamePref, gameOptions)}
             </Link>
           )}
           {profile.playstyle && (

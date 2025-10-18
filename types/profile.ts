@@ -1,11 +1,4 @@
-export type GamePref =
-  | "world_of_warcraft"
-  | "final_fantasy_xiv"
-  | "lost_ark"
-  | "elder_scrolls_online"
-  | "new_world"
-  | "guild_wars_2"
-  | "black_desert_online";
+export type GamePref = string;
 
 export type TimeSlot =
   | "weekdays_mornings"

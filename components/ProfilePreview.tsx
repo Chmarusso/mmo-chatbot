@@ -4,14 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types/profile";
-import { preferenceLabel, GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
+import { preferenceLabel, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from "@/types/profile";
 import { resolveAvatarUrl, isPlaceholderAvatar } from "@/lib/avatar";
+import { useGameOptions } from "@/lib/hooks/useGameOptions";
 
 interface ProfilePreviewProps {
   profile: Profile;
 }
 
 export function ProfilePreview({ profile }: ProfilePreviewProps) {
+  const { data: gameOptions } = useGameOptions();
   const timeSlots =
     profile.timeSlots && profile.timeSlots.length > 0
       ? profile.timeSlots
@@ -49,7 +51,7 @@ export function ProfilePreview({ profile }: ProfilePreviewProps) {
               href={`/games/${profile.gamePref.replace(/_/g, '-')}`}
               className="inline-flex items-center rounded-full bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
             >
-              {preferenceLabel(profile.gamePref, GAME_OPTIONS)}
+              {preferenceLabel(profile.gamePref, gameOptions)}
             </Link>
           )}
           {profile.playstyle && (

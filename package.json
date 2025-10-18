@@ -16,11 +16,14 @@
     "add-games:batch": "tsx scripts/batch-add-games.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:dump": "./scripts/db-dump.sh",
+    "db:dump:games": "./scripts/db-dump-games.sh",
     "db:restore": "./scripts/db-restore.sh",
     "upload:db": "./scripts/upload-db.sh",
+    "upload:db:games": "./scripts/upload-db.sh",
     "deploy:vps": "./scripts/deploy.sh",
     "seed:preferences": "tsx prisma/seeds/preferenceOptions.ts",
-    "generate:fakes": "tsx scripts/create-fake-matches.ts"
+    "generate:fakes": "tsx scripts/create-fake-matches.ts",
+    "generate:game-embeddings": "tsx scripts/generate-game-embeddings.ts"
   },
   "prisma": {
     "seed": "pnpm db:seed"

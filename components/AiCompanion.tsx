@@ -17,8 +17,9 @@ import {
   ChatMessages,
 } from "@/components/ui/chat";
 import type { AiMessage, AiCompanionProfileSnapshot } from "@/types/ai";
-import { GAME_OPTIONS, PLAYSTYLES, TIME_SLOTS } from "@/types/profile";
+import { PreferenceOption, PLAYSTYLES, TIME_SLOTS } from "@/types/profile";
 import { GameRecommendationCard } from "@/components/GameRecommendationCard";
+import { useGameOptions } from "@/lib/hooks/useGameOptions";
 
 const FETCH_INTERVAL_MS = 45_000;
 
@@ -59,6 +60,7 @@ interface CompanionOnboardingProps {
   initialGames: string[];
   initialPlaystyle: string | null;
   initialTimeSlots: string[];
+  gameOptions: PreferenceOption<string>[];
   onComplete: (snapshot: AiCompanionProfileSnapshot) => void;
 }
 
@@ -69,6 +71,7 @@ export function AiCompanion() {
   const [isSending, setIsSending] = useState(false);
   const [profileSnapshot, setProfileSnapshot] = useState<AiCompanionProfileSnapshot | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { data: gameOptions } = useGameOptions();
 
   const needsOnboarding =
     !isLoading &&
@@ -307,6 +310,7 @@ export function AiCompanion() {
                     initialGames={initialGames}
                     initialPlaystyle={profileSnapshot?.playstyle ?? null}
                     initialTimeSlots={initialCompanionTimeSlots}
+                    gameOptions={gameOptions}
                     onComplete={handleOnboardingComplete}
                   />
                 </ChatBubbleMessage>
@@ -349,6 +353,7 @@ function CompanionOnboarding({
   initialGames,
   initialPlaystyle,
   initialTimeSlots,
+  gameOptions,
   onComplete,
 }: CompanionOnboardingProps) {
   const [selectedGames, setSelectedGames] = useState<string[]>(initialGames);
@@ -358,9 +363,6 @@ function CompanionOnboarding({
     Array.from(new Set(initialTimeSlots)),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const initialGamesKey = useMemo(() => initialGames.join("|"), [initialGames]);
-  const initialTimeSlotsKey = useMemo(() => initialTimeSlots.join("|"), [initialTimeSlots]);
 
   useEffect(() => {
     setSelectedGames(initialGames);
@@ -382,13 +384,18 @@ function CompanionOnboarding({
     );
   };
 
+  const sortedGameOptions = useMemo(
+    () => [...gameOptions].sort((a, b) => a.label.localeCompare(b.label)),
+    [gameOptions],
+  );
+
   const filteredGames = useMemo(() => {
     const query = gameSearch.trim().toLowerCase();
     if (!query) {
-      return GAME_OPTIONS;
+      return sortedGameOptions;
     }
-    return GAME_OPTIONS.filter((option) => option.label.toLowerCase().includes(query));
-  }, [gameSearch]);
+    return sortedGameOptions.filter((option) => option.label.toLowerCase().includes(query));
+  }, [gameSearch, sortedGameOptions]);
 
   const toggleGame = (value: string) => {
     setSelectedGames((prev) =>

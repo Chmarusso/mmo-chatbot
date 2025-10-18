@@ -25,12 +25,12 @@ import { useMarkMatchViewedOnce } from "@/lib/hooks/useMarkMatchViewedOnce";
 import type { Profile as UserProfile } from "@/types/profile";
 import {
   preferenceLabel,
-  GAME_OPTIONS,
   TIME_SLOTS,
   LANGUAGES,
   PLAYSTYLES,
 } from "@/types/profile";
 import { Check, CheckCheck, MoreVertical, Ban, Trash2 } from "lucide-react";
+import { useGameOptions } from "@/lib/hooks/useGameOptions";
 
 interface ChatRoomProps {
   matchId: string;
@@ -53,6 +53,7 @@ export function ChatRoom({
   canSend = true,
   readOnlyReason,
 }: ChatRoomProps) {
+  const { data: gameOptions } = useGameOptions();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -240,7 +241,7 @@ export function ChatRoom({
                 href={`/games/${otherProfile.gamePref.replace(/_/g, '-')}`}
                 className="inline-flex items-center rounded-full bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
               >
-                {preferenceLabel(otherProfile.gamePref, GAME_OPTIONS)}
+                {preferenceLabel(otherProfile.gamePref, gameOptions)}
               </Link>
             )}
             {otherProfile.playstyle && (
