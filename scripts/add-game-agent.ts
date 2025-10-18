@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { downloadAndUploadToSupabase } from "../lib/supabase-storage";
 
 const prisma = new PrismaClient();
@@ -26,6 +26,49 @@ interface GameData {
   screenshot: string;
   website: string;
   categorySlug?: string;
+  summary?: string;
+  featureSummary?: string;
+  genreTags: string[];
+  platformTags: string[];
+  gameplayTags: string[];
+  worldTags: string[];
+  visualStyleTags: string[];
+  monetization?: string | null;
+  idealFor?: string | null;
+  systemRequirements?: Prisma.JsonValue | null;
+  ragProfile?: Prisma.JsonValue | null;
+  sourceUrls: string[];
+}
+
+interface StructuredProfile {
+  summary: string | null;
+  featureSummary: string | null;
+  genreTags: string[];
+  platformTags: string[];
+  gameplayTags: string[];
+  worldTags: string[];
+  visualStyleTags: string[];
+  monetization: string | null;
+  idealFor: string | null;
+  systemRequirements: Prisma.JsonValue | null;
+  ragProfile: Prisma.JsonValue | null;
+}
+
+function extractJsonFromContent(content: string): Record<string, unknown> | null {
+  const fenceMatch = content.match(/```json([\s\S]*?)```/i);
+  const rawBlock = fenceMatch ? fenceMatch[1] : content;
+  const start = rawBlock.indexOf("{");
+  const end = rawBlock.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    return null;
+  }
+
+  const candidate = rawBlock.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -547,6 +590,168 @@ Respond in JSON format:
 }
 
 /**
+ * Generate structured metadata for richer RAG/embedding content
+ */
+async function generateStructuredProfile(
+  scrapedData: ScrapedGameData,
+  analyzedDescription: string
+): Promise<StructuredProfile> {
+  const fallback: StructuredProfile = {
+    summary: analyzedDescription.slice(0, 500) || scrapedData.rawDescription.slice(0, 500) || null,
+    featureSummary: null,
+    genreTags: [],
+    platformTags: [],
+    gameplayTags: [],
+    worldTags: [],
+    visualStyleTags: [],
+    monetization: null,
+    idealFor: null,
+    systemRequirements: null,
+    ragProfile: null,
+  };
+
+  if (!OPENROUTER_KEY) {
+    console.warn("⚠️  OPENROUTER_API_KEY not set, skipping structured profile generation");
+    return fallback;
+  }
+
+  const combinedSources = [
+    analyzedDescription,
+    scrapedData.sonarInfo,
+    scrapedData.rawDescription,
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+    .slice(0, 12000);
+
+  const prompt = `You curate a knowledge base for MMORPG matchmaking. Based ONLY on the provided research, produce a JSON object capturing attributes players care about when choosing a game.
+
+IMPORTANT RESPONSE RULES:
+- Output MUST be valid JSON.
+- Wrap the JSON in a \`\`\`json ... \`\`\` code block.
+- Do NOT include commentary, explanations, or any text outside the JSON block.
+- If data is unavailable, use null or an empty array.
+
+Focus on grounded facts that appear in the text. If a field is unknown, use null or an empty array. Keep strings concise but descriptive.
+
+Required JSON schema:
+{
+  "summary": "Concise 2-3 sentence overview capturing tone, world, and hook",
+  "featureSummary": "Bullet-style paragraph (use plain text with • markers) highlighting standout mechanics, progression, social or competitive hooks, and content cadence",
+  "genreTags": ["broad and sub-genre labels (e.g., mmorpg, sandbox, action combat)"],
+  "platformTags": ["platforms or ecosystems (pc, xbox, playstation, mobile, cloud, browser)"],
+  "gameplayTags": ["mechanics and experience notes (tab-target combat, action dodge, crafting-focused, raid-heavy, card-based, etc)"],
+  "worldTags": ["world scope or structure (seamless open world, instanced hubs, procedural maps, turn-based arenas, etc)"],
+  "visualStyleTags": ["visual/audio tone (stylized fantasy, grimdark realistic, anime, voxel, retro pixel, etc)"],
+  "monetization": "Plain sentence on business model and monetization beats",
+  "idealFor": "Plain sentence describing player archetypes who will enjoy it",
+  "systemRequirements": {
+    "minimum": { "cpu": "...", "gpu": "...", "ram": "...", "storage": "...", "notes": "..." },
+    "recommended": { "cpu": "...", "gpu": "...", "ram": "...", "storage": "...", "notes": "..." },
+    "additionalNotes": "Any other performance considerations" 
+  },
+  "ragProfile": {
+    "coreLoop": "Short paragraph describing moment-to-moment play",
+    "gameplayPillars": ["combat", "crafting", "exploration", etc],
+    "progression": "Leveling & gearing summary",
+    "pveFocus": "PVE emphasis or null",
+    "pvpFocus": "PVP emphasis or null",
+    "groupTypes": "Typical party/raid sizes or solo emphasis",
+    "sessionPace": "Short, medium, long, grind-heavy, etc",
+    "difficulty": "Relative difficulty or skill expectations",
+    "socialFeatures": ["guilds, trading, housing, voice, etc"],
+    "interfaceStyle": "HUD & control notes",
+    "worldStructure": "Open world, hub-based, shard, instanced, etc",
+    "notableMechanics": ["unique mechanics worth highlighting"],
+    "extraInsights": ["any other key insights or community sentiments"]
+  }
+}
+
+Research input (truncate if necessary):
+${combinedSources}`;
+
+  console.log(`\n🧠 Generating structured profile...`);
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "HTTP-Referer": APP_URL,
+        "X-Title": "MMOPLAYA Game Agent",
+      },
+      body: JSON.stringify({
+        model: "anthropic/claude-3.5-haiku",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.4,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenRouter error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const rawContent = data?.choices?.[0]?.message?.content?.trim();
+
+    if (!rawContent) {
+      throw new Error("No response from model");
+    }
+
+    const parsed = extractJsonFromContent(rawContent);
+
+    if (!parsed) {
+      throw new Error("Model response did not contain valid JSON");
+    }
+
+    const toStringArray = (value: unknown): string[] =>
+      Array.isArray(value) ? value.map((item) => String(item).trim()).filter(Boolean) : [];
+
+    const profile: StructuredProfile = {
+      summary: typeof parsed.summary === "string" && parsed.summary.trim().length > 0 ? parsed.summary.trim() : fallback.summary,
+      featureSummary:
+        typeof parsed.featureSummary === "string" && parsed.featureSummary.trim().length > 0
+          ? parsed.featureSummary.trim()
+          : fallback.featureSummary,
+      genreTags: toStringArray(parsed.genreTags),
+      platformTags: toStringArray(parsed.platformTags),
+      gameplayTags: toStringArray(parsed.gameplayTags),
+      worldTags: toStringArray(parsed.worldTags),
+      visualStyleTags: toStringArray(parsed.visualStyleTags),
+      monetization:
+        typeof parsed.monetization === "string" && parsed.monetization.trim().length > 0
+          ? parsed.monetization.trim()
+          : fallback.monetization,
+      idealFor:
+        typeof parsed.idealFor === "string" && parsed.idealFor.trim().length > 0
+          ? parsed.idealFor.trim()
+          : fallback.idealFor,
+      systemRequirements:
+        parsed.systemRequirements && typeof parsed.systemRequirements === "object"
+          ? (parsed.systemRequirements as Prisma.JsonValue)
+          : fallback.systemRequirements,
+      ragProfile:
+        parsed.ragProfile && typeof parsed.ragProfile === "object"
+          ? (parsed.ragProfile as Prisma.JsonValue)
+          : fallback.ragProfile,
+    };
+
+    console.log("  ✓ Structured profile generated");
+    return profile;
+  } catch (error) {
+    console.error("  ⚠️  Structured profile generation failed:", error);
+    return fallback;
+  }
+}
+
+/**
  * Create a slug from game title
  */
 function createSlug(title: string): string {
@@ -581,6 +786,10 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
     console.log(`\n📝 Game "${gameData.title}" already exists (slug: ${slug})`);
     console.log("   Updating with new data...");
 
+    const existingSourceUrls = Array.isArray(existing.sourceUrls)
+      ? existing.sourceUrls.map((item: unknown) => String(item))
+      : [];
+
     await prisma.game.update({
       where: { value: slug },
       data: {
@@ -589,6 +798,29 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
         screenshot: gameData.screenshot || existing.screenshot,
         website: gameData.website || existing.website,
         categoryId: categoryId || existing.categoryId,
+        summary: gameData.summary ?? existing.summary,
+        featureSummary: gameData.featureSummary ?? existing.featureSummary,
+        genreTags: gameData.genreTags.length > 0 ? gameData.genreTags : existing.genreTags ?? [],
+        platformTags:
+          gameData.platformTags.length > 0 ? gameData.platformTags : existing.platformTags ?? [],
+        gameplayTags:
+          gameData.gameplayTags.length > 0 ? gameData.gameplayTags : existing.gameplayTags ?? [],
+        worldTags: gameData.worldTags.length > 0 ? gameData.worldTags : existing.worldTags ?? [],
+        visualStyleTags:
+          gameData.visualStyleTags.length > 0
+            ? gameData.visualStyleTags
+            : existing.visualStyleTags ?? [],
+        monetization: typeof gameData.monetization !== "undefined" ? gameData.monetization : existing.monetization,
+        idealFor: typeof gameData.idealFor !== "undefined" ? gameData.idealFor : existing.idealFor,
+        systemRequirements:
+          typeof gameData.systemRequirements !== "undefined"
+            ? (gameData.systemRequirements ?? Prisma.JsonNull)
+            : (existing.systemRequirements ?? Prisma.JsonNull),
+        ragProfile:
+          typeof gameData.ragProfile !== "undefined"
+            ? (gameData.ragProfile ?? Prisma.JsonNull)
+            : (existing.ragProfile ?? Prisma.JsonNull),
+        sourceUrls: gameData.sourceUrls.length > 0 ? gameData.sourceUrls : existingSourceUrls,
       },
     });
 
@@ -605,6 +837,18 @@ async function addGameToDatabase(gameData: GameData): Promise<void> {
       screenshot: gameData.screenshot || null,
       website: gameData.website || null,
       categoryId: categoryId || null,
+      summary: gameData.summary ?? null,
+      featureSummary: gameData.featureSummary ?? null,
+      genreTags: gameData.genreTags,
+      platformTags: gameData.platformTags,
+      gameplayTags: gameData.gameplayTags,
+      worldTags: gameData.worldTags,
+      visualStyleTags: gameData.visualStyleTags,
+      monetization: gameData.monetization ?? null,
+      idealFor: gameData.idealFor ?? null,
+      systemRequirements: gameData.systemRequirements ?? Prisma.JsonNull,
+      ragProfile: gameData.ragProfile ?? Prisma.JsonNull,
+      sourceUrls: gameData.sourceUrls,
     },
   });
 
@@ -654,6 +898,9 @@ async function main() {
 
   // Step 3: Analyze with AI
   const analysis = await analyzeGameWithAI(scrapedData, categories);
+
+  // Step 3.5: Build structured profile for RAG
+  const structuredProfile = await generateStructuredProfile(scrapedData, analysis.description);
 
   // Step 4: Download and upload screenshot to Supabase with fallback logic
   let uploadedScreenshotUrl = "";
@@ -717,6 +964,18 @@ async function main() {
     screenshot: uploadedScreenshotUrl,
     website: scrapedData.website,
     categorySlug: analysis.categorySlug || undefined,
+    summary: structuredProfile.summary ?? undefined,
+    featureSummary: structuredProfile.featureSummary ?? undefined,
+    genreTags: structuredProfile.genreTags,
+    platformTags: structuredProfile.platformTags,
+    gameplayTags: structuredProfile.gameplayTags,
+    worldTags: structuredProfile.worldTags,
+    visualStyleTags: structuredProfile.visualStyleTags,
+    monetization: structuredProfile.monetization,
+    idealFor: structuredProfile.idealFor,
+    systemRequirements: structuredProfile.systemRequirements,
+    ragProfile: structuredProfile.ragProfile,
+    sourceUrls: scrapedData.sources,
   };
 
   console.log(`\n📋 Game Summary:`);
@@ -726,6 +985,7 @@ async function main() {
   console.log(`  Category: ${gameData.categorySlug || "None"}`);
   console.log(`  Screenshot: ${gameData.screenshot ? "✓" : "✗"}`);
   console.log(`  Website: ${gameData.website ? "✓" : "✗"}`);
+  console.log(`  Tags: ${gameData.genreTags.slice(0, 6).join(", ") || "None"}`);
 
   // Step 6: Add to database
   console.log(`\n💾 Saving to database...`);

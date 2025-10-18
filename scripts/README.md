@@ -215,6 +215,27 @@ This executes `scripts/generate-game-embeddings.ts`, which reads every game from
 - Ensure `OPENAI_API_KEY` is set in your environment.
 - The script prompts before overwriting existing embeddings.
 - Run it against your local database, validate the results (e.g., `npm run db:dump:games` or `npm run generate:game-embeddings` followed by `scripts/verify-embeddings.ts`), then push the updated `Game` data to the VPS if needed.
+- The `add-game` agent now captures structured metadata (genre/platform/gameplay tags, monetization, system requirements, and a rich RAG profile) which feeds this embedding generator. Regenerate embeddings whenever that metadata changes so the vector space stays aligned.
+
+### Batch Updating Feature Summaries
+
+If you have existing games without the richer metadata, run the updater to reprocess them through the new pipeline:
+
+```bash
+npm run update-games:feature-summary
+# optional flags:
+#   --start-from 10    skip the first 10 matches
+#   --limit 25         only update 25 games
+#   --dry-run          show which titles would run without calling the agent
+```
+
+The script calls the `add-game` agent for each title, so it will fetch fresh data, regenerate structured fields, and keep screenshots up to date.
+
+### Reviewing Community Suggestions
+
+- Players can now submit new-game requests (`/games/suggest`) and update proposals for existing titles (`/games/{game}/suggest-edit`).
+- Admins review submissions at `/admin/game-suggestions` and `/admin/game-update-suggestions`.
+- Accepting a game update applies the payload instantly (description, metadata, screenshots, tags, etc.), so consider running `npm run update-games:feature-summary` and `pnpm generate:game-embeddings` afterwards to keep vectors aligned.
 
 #### Verifying the Import
 

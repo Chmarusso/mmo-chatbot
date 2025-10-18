@@ -13,6 +13,8 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
 - Invite-gated matches and companion experiences that unlock once a profile supplies a valid invite code.
 - Dark/light theme support with system default preference saved to user profile.
 - Games directory with individual game pages featuring screenshots, descriptions, official website links, star ratings, community comments, and player listings.
+- Community-powered game catalog updates: players can suggest new titles and metadata fixes, while admins review and accept changes.
+- LLM-backed moderation protects avatars and in-game comments from abusive or NSFW content.
 - Settings page with sign-out and full account deletion that cascades through matches, swipes, and messages.
 - Notification preferences for new matches, messages, and announcements.
 - Middleware-backed session guard that redirects unauthenticated users to the landing page.
@@ -61,8 +63,9 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
    OTP_EXPIRATION_MINUTES=10        # optional override
    SESSION_TTL_DAYS=30              # optional override
    MODERATION_SECRET="super-secret"      # required for moderation endpoints
-   OPENROUTER_API_KEY="sk-or-..."         # required for LLM-based moderation
-   MODERATION_MODEL="openrouter/auto"     # optional override
+  OPENROUTER_API_KEY="sk-or-..."         # required for avatar + comment moderation and suggestion review
+  COMMENT_MODERATION_MODEL="mistralai/mistral-7b-instruct"  # optional override for game comment checks
+  MODERATION_MODEL="openrouter/auto"     # optional override for shadowban tooling
    COMPANION_MODEL="anthropic/claude-3.5-haiku"  # optional override for the AI companion
    OPENAI_API_KEY="sk-..."                # optional, for intent detection (uses fallback regex if missing)
   ```
@@ -158,8 +161,14 @@ app/
       [gameValue]/
         rating/          Submit game ratings
         comments/        Post and fetch game comments
+        suggest-edit/    Suggest metadata updates for an existing game
+    game-suggestions/    Submit and moderate new game requests
+    game-update-suggestions/ Moderate metadata update submissions
     og/                  Dynamic Open Graph preview cards (player/guild/event)
     moderation/          Shadowban + automated review endpoints
+  admin/
+    game-suggestions/    Admin queue for new game requests
+    game-update-suggestions/ Admin queue for metadata updates
 components/              UI primitives, swipe deck, chat room, forms, game ratings/comments
 lib/                     Prisma client, auth/session helpers, mailer
 middleware.ts            Session guard + redirect rules
@@ -193,6 +202,11 @@ Game embeddings enable intelligent game discovery beyond keyword matching:
 - Stored in PostgreSQL with pgvector extension for fast nearest-neighbor queries
 
 **Note**: The pgvector extension is required for full embedding functionality. Without it, the system will store metadata fields but not perform semantic searches.
+
+### Moderation Pipelines
+- **Avatar uploads** are scanned with OpenAI's `omni-moderation-latest` before storing in Supabase.
+- **Game comments** are screened through OpenRouter (default `mistralai/mistral-7b-instruct`) to block spam, abuse, or explicit content.
+- **Community suggestions** (new games and metadata updates) route through `/admin/game-suggestions` and `/admin/game-update-suggestions` where admins can accept, reject, or annotate submissions. Accepted game edits apply immediately to the catalog.
 
 #### Generate Game Embeddings
 To populate embeddings for your game library:

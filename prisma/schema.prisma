@@ -51,6 +51,7 @@ model Profile {
   isVerified   Boolean       @default(false)
   isShadowbanned Boolean     @default(false)
   isChild      Boolean       @default(false)
+  isAdmin      Boolean       @default(false)
   guardianProfileId String?
   exp          Int           @default(0)
   level        Int           @default(1)
@@ -94,6 +95,10 @@ model Profile {
   aiConversation AiConversation?
   inviteClaims InviteCode[] @relation("InviteCodeClaimer")
   gameWebsiteClicks GameWebsiteClick[] @relation("ProfileGameWebsiteClick")
+  suggestionsCreated GameSuggestion[] @relation("SuggestionAuthor")
+  suggestionsHandled GameSuggestion[] @relation("SuggestionHandler")
+  gameUpdateSuggestionsCreated GameUpdateSuggestion[] @relation("GameUpdateAuthor")
+  gameUpdateSuggestionsHandled GameUpdateSuggestion[] @relation("GameUpdateHandler")
 }
 
 model InviteCode {
@@ -122,6 +127,18 @@ model Game {
   description String?       @db.VarChar(5000)
   screenshot  String?       @db.VarChar(500)
   website     String?       @db.VarChar(500)
+  summary     String?       @db.VarChar(1500)
+  featureSummary String?    @db.VarChar(2000)
+  genreTags   String[]      @default([])
+  platformTags String[]     @default([])
+  gameplayTags String[]     @default([])
+  worldTags   String[]      @default([])
+  visualStyleTags String[]  @default([])
+  monetization String?      @db.VarChar(200)
+  idealFor    String?       @db.VarChar(500)
+  systemRequirements Json?
+  ragProfile  Json?
+  sourceUrls  Json?
   categoryId  String?
 
   // Vector embedding fields for semantic search
@@ -134,9 +151,58 @@ model Game {
   ratings     GameRating[]
   comments    GameComment[]
   websiteClicks GameWebsiteClick[]
+  updateSuggestions GameUpdateSuggestion[]
 
   @@index([categoryId])
   @@index([embeddingGeneratedAt])
+}
+
+enum GameSuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model GameSuggestion {
+  id                  String                @id @default(uuid())
+  title               String                @db.VarChar(150)
+  description         String?               @db.VarChar(2000)
+  referenceUrl        String?               @db.VarChar(500)
+  status              GameSuggestionStatus  @default(PENDING)
+  adminNotes          String?               @db.VarChar(1000)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  handledAt           DateTime?
+  createdByProfileId  String
+  handledByProfileId  String?
+
+  createdBy Profile @relation("SuggestionAuthor", fields: [createdByProfileId], references: [id], onDelete: Cascade)
+  handledBy Profile? @relation("SuggestionHandler", fields: [handledByProfileId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model GameUpdateSuggestion {
+  id                  String                @id @default(uuid())
+  gameValue           String                @db.VarChar(64)
+  payload             Json                  @db.Json
+  comment             String?               @db.VarChar(1000)
+  status              GameSuggestionStatus  @default(PENDING)
+  adminNotes          String?               @db.VarChar(1000)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  handledAt           DateTime?
+  createdByProfileId  String
+  handledByProfileId  String?
+
+  game       Game    @relation(fields: [gameValue], references: [value], onDelete: Cascade)
+  createdBy Profile @relation("GameUpdateAuthor", fields: [createdByProfileId], references: [id], onDelete: Cascade)
+  handledBy Profile? @relation("GameUpdateHandler", fields: [handledByProfileId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([gameValue])
 }
 
 model GameWebsiteClick {

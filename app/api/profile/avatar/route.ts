@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile } from "@/lib/profile";
 import { uploadToSupabase, deleteFromSupabase } from "@/lib/supabase-storage";
+import { isImageSafe } from "@/lib/nsfw";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
 
@@ -25,6 +26,18 @@ export async function POST(request: Request) {
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
+  const mimeType = file.type || "image/png";
+  const dataUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
+
+  try {
+    const safe = await isImageSafe(dataUrl);
+    if (!safe) {
+      return NextResponse.json({ error: "Avatar appears to violate content guidelines." }, { status: 400 });
+    }
+  } catch (error) {
+    console.error("Avatar moderation error", error);
+    return NextResponse.json({ error: "Avatar moderation temporarily unavailable" }, { status: 503 });
+  }
   const ext = file.name.split(".").pop() ?? "png";
   const filename = `${profile.id}-${Date.now()}.${ext}`;
 

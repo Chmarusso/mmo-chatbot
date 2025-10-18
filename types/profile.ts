@@ -47,6 +47,7 @@ export interface Profile {
   isVerified: boolean;
   isShadowbanned: boolean;
   isChild: boolean;
+  isAdmin: boolean;
   notifyOnNewMatch: boolean;
   notifyOnNewMessage: boolean;
   notifyOnAnnouncements: boolean;

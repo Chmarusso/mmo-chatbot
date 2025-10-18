@@ -29,6 +29,14 @@ export default async function GamesPage() {
         <p className="text-sm text-gray-300 lg:text-base">
           MMOPLAYA connects players across the titles below. Update your profile to squad up in your favourite worlds.
         </p>
+        <div className="flex items-center justify-center gap-3 lg:justify-start">
+          <Link
+            href="/games/suggest"
+            className="inline-flex items-center rounded-full border border-accent-cyan/40 px-4 py-2 text-sm font-semibold text-accent-cyan transition hover:bg-accent-cyan/15"
+          >
+            Suggest a game
+          </Link>
+        </div>
       </header>
 
       {/* Category Filter */}

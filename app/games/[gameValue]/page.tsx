@@ -106,6 +106,14 @@ export default async function GamePage({ params }: GamePageProps) {
           ← Back to Games
         </Link>
         <h1 className="text-3xl font-semibold text-white lg:text-4xl">{game.label}</h1>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <Link
+            href={`/games/${game.value.replace(/_/g, '-')}/suggest-edit`}
+            className="inline-flex items-center rounded-full border border-accent-cyan/40 px-4 py-1.5 text-accent-cyan transition hover:bg-accent-cyan/15"
+          >
+            Suggest an edit
+          </Link>
+        </div>
       </header>
 
       {/* Screenshot Section */}

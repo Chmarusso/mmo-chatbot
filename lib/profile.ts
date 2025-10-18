@@ -34,6 +34,7 @@ export const serializeProfile = (profile: PrismaProfile, user: User): Profile =>
   isVerified: (profile as Record<string, unknown>).isVerified === undefined ? false : Boolean((profile as Record<string, unknown>).isVerified),
   isShadowbanned: (profile as Record<string, unknown>).isShadowbanned === undefined ? false : Boolean((profile as Record<string, unknown>).isShadowbanned),
   isChild: (profile as Record<string, unknown>).isChild === undefined ? false : Boolean((profile as Record<string, unknown>).isChild),
+  isAdmin: (profile as Record<string, unknown>).isAdmin === undefined ? false : Boolean((profile as Record<string, unknown>).isAdmin),
   guardianProfileId: profile.guardianProfileId ?? null,
   createdAt: profile.createdAt.toISOString(),
   updatedAt: profile.updatedAt.toISOString(),

@@ -14,6 +14,7 @@
     "generate:invites": "tsx scripts/generate-invite-codes.ts",
     "add-game": "tsx scripts/add-game-agent.ts",
     "add-games:batch": "tsx scripts/batch-add-games.ts",
+    "update-games:feature-summary": "tsx scripts/batch-update-games.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:dump": "./scripts/db-dump.sh",
     "db:dump:games": "./scripts/db-dump-games.sh",

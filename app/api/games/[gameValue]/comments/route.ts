@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { awardExp } from "@/lib/exp";
+import { moderateComment } from "@/lib/comment-moderation";
 
 export async function GET(
   request: Request,
@@ -71,6 +72,17 @@ export async function POST(
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
+    const moderation = await moderateComment(content.trim());
+    if (!moderation.allowed) {
+      return NextResponse.json(
+        {
+          error: "Comment violates community guidelines.",
+          reasons: moderation.reasons ?? undefined,
+        },
+        { status: 400 }
+      );
     }
 
     // Create comment

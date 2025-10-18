@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { GAME_OPTIONS, TIME_SLOTS, LANGUAGES, PLAYSTYLES } from '../../types/profile';
 
 const GAME_CATEGORIES = [
