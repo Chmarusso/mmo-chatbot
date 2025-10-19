@@ -1,41 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
-import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
+import { prisma, createOtp, normalizeEmail, APP_URL } from './helpers';
 
-const prisma = new PrismaClient();
-const selectOption = async (page: Page, label: string, optionText: string | RegExp) => {
-  const trigger = page.getByRole('combobox', { name: label }).first();
-  await trigger.scrollIntoViewIfNeeded();
-  await trigger.click();
+const selectGameOrPlaystyle = async (page: Page, placeholder: string, optionText: string | RegExp) => {
+  await page.getByText(placeholder).click();
   await page.getByRole('option', { name: optionText }).click();
-  await expect(trigger).toHaveText(optionText);
 };
-const APP_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 
-const hashOtpCode = (code: string) =>
-  crypto.createHash('sha256').update(code).digest('hex');
+const selectLanguage = async (page: Page, optionText: string | RegExp) => {
+  const languageButton = page.getByText('Select a language');
+  const languageAlreadySelected = await languageButton.count() === 0;
 
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
-
-const createOtp = async (email: string, code: string) => {
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await prisma.user.upsert({
-    where: { email: normalizedEmail },
-    create: { email: normalizedEmail },
-    update: {},
-    select: { id: true },
-  });
-
-  await prisma.otpToken.deleteMany({ where: { email: normalizedEmail } });
-  await prisma.otpToken.create({
-    data: {
-      userId: user.id,
-      email: normalizedEmail,
-      tokenHash: hashOtpCode(code),
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    },
-  });
+  if (!languageAlreadySelected) {
+    await languageButton.click();
+    await page.getByRole('option', { name: optionText }).click();
+  }
 };
 
 test.beforeAll(async () => {
@@ -62,14 +40,22 @@ test('user can log in via OTP and update their profile', async ({ page }) => {
   await expect(page.getByText('Complete profile')).toBeVisible();
 
   await page.goto('/profile');
+  await page.waitForLoadState('networkidle');
+
+  // Step 0: Select game and playstyle
+  await selectGameOrPlaystyle(page, 'Select a game', /Final Fantasy XIV/i);
+  await selectGameOrPlaystyle(page, 'Select a playstyle', /Casual/i);
+  await page.locator('button[type="submit"]').filter({ hasText: 'Next' }).click();
+
+  // Step 1: Select time slot and language
+  await page.getByRole('button', { name: /Weekend evenings/i }).click();
+  await selectLanguage(page, /English/i);
+  await page.locator('button[type="submit"]').filter({ hasText: 'Next' }).click();
+
+  // Step 2: Fill name and bio
   await expect(page.locator('#name')).toBeVisible();
   await page.fill('#name', 'Playwright Hero');
   await page.fill('#bio', 'Testing the realms of MMOPLAYA.');
-
-  await selectOption(page, 'Preferred MMO', /Final Fantasy XIV/i);
-  await selectOption(page, 'Time Slot (UTC)', /Weekends Evenings/i);
-  await selectOption(page, 'Language', /English/i);
-  await selectOption(page, 'Playstyle', /Casual/i);
 
   const saveResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/api/profile') && response.request().method() === 'PUT'
@@ -88,10 +74,10 @@ test('user can log in via OTP and update their profile', async ({ page }) => {
     name: 'Playwright Hero',
     bio: 'Testing the realms of MMOPLAYA.',
     gamePref: 'final_fantasy_xiv',
-    timeSlot: 'weekends_evenings',
     language: 'english',
     playstyle: 'casual',
   });
+  expect(stored?.profile?.timeSlots).toContain('weekends_evenings');
 
   await prisma.user.deleteMany({ where: { email: normalizeEmail(email) } });
   await prisma.otpToken.deleteMany({ where: { email: normalizeEmail(email) } });

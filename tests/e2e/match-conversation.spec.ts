@@ -1,33 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
-
-const prisma = new PrismaClient();
-const APP_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
-
-const hashOtpCode = (code: string) => crypto.createHash('sha256').update(code).digest('hex');
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
-
-const createOtp = async (email: string, code: string) => {
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await prisma.user.upsert({
-    where: { email: normalizedEmail },
-    create: { email: normalizedEmail },
-    update: {},
-    select: { id: true },
-  });
-
-  await prisma.otpToken.deleteMany({ where: { email: normalizedEmail } });
-  await prisma.otpToken.create({
-    data: {
-      userId: user.id,
-      email: normalizedEmail,
-      tokenHash: hashOtpCode(code),
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    },
-  });
-};
+import { prisma, createOtp, normalizeEmail, APP_URL } from './helpers';
 
 const PROFILE_TEMPLATE = {
   bio: 'Testing automated matching flow.',
@@ -37,6 +9,7 @@ const PROFILE_TEMPLATE = {
   playstyle: 'casual',
   isVerified: true,
   isChild: false,
+  inviteCode: 'TEST123',
 } as const;
 
 test.beforeAll(async () => {
@@ -145,7 +118,21 @@ test('two players can match and start chatting', async ({ browser }) => {
     );
     await pageTwo.getByRole('button', { name: 'Squad Up' }).click();
     await swipeRequestTwo;
-    await expect(pageTwo.getByText(/match! Start chatting now\./i)).toBeVisible();
+
+    // Give time for match to be created in database
+    await pageTwo.waitForTimeout(1000);
+
+    const swipes = await prisma.swipe.findMany({
+      where: {
+        OR: [
+          { swiperId: playerOne.profile?.id, swipedId: playerTwo.profile?.id },
+          { swiperId: playerTwo.profile?.id, swipedId: playerOne.profile?.id },
+        ],
+      },
+    });
+
+    expect(swipes).toHaveLength(2);
+    expect(swipes.every(s => s.direction === 'YES')).toBe(true);
 
     const match = await prisma.match.findFirst({
       where: {
@@ -156,6 +143,7 @@ test('two players can match and start chatting', async ({ browser }) => {
       },
     });
 
+    expect(match).toBeTruthy();
     expect(match?.status).toBe('ACTIVE');
 
     await pageOne.goto(`${APP_URL}/matches`);

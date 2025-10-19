@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createOtp, cleanupUser } from './profile-persistence.spec';
-
-const APP_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
+import { createOtp, cleanupUser, APP_URL } from './helpers';
 
 const emailFor = (suffix: string) => `playwright+account-${suffix}-${Date.now()}@example.com`;
 const OTP_CODE = '112233';
