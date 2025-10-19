@@ -68,12 +68,20 @@ const sanitizeRedirectParam = (redirect?: string) => {
   return redirect;
 };
 
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_code: "The code you entered is invalid or expired. Please request a new one.",
+  disposable_email: "Temporary or disposable email addresses are not allowed.",
+  blocked: "This account has been blocked. Contact support if you believe this is a mistake.",
+  missing_code: "Missing login information. Please request a new code.",
+};
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const error = params?.error;
   const redirectPath = sanitizeRedirectParam(params?.redirect);
   const headerList = await headers();
   const greeting = getLocalizedGreeting(headerList.get("accept-language"));
+  const errorMessage = error ? ERROR_MESSAGES[error] ?? "Something went wrong. Please request a new link." : null;
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
@@ -104,9 +112,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <p className="text-sm text-text-secondary">
               Enter your email to receive code or login link. <br/>No passwords required.
             </p>
-            {error && (
+            {errorMessage && (
               <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
-                Something went wrong. Please request a new link.
+                {errorMessage}
               </p>
             )}
           </header>

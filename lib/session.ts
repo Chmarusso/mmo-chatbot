@@ -67,5 +67,11 @@ export async function getCurrentUser() {
     return null;
   }
 
+  if (session.user.profile?.isShadowbanned) {
+    await prisma.session.delete({ where: { token } }).catch(() => undefined);
+    cookieStore.delete(SESSION_COOKIE_NAME);
+    return null;
+  }
+
   return session.user;
 }

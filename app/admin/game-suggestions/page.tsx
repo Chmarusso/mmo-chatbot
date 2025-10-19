@@ -30,8 +30,10 @@ export default async function AdminGameSuggestionsPage({ searchParams }: PagePro
     ? (rawStatus as GameSuggestionStatus)
     : "pending";
 
+  const prismaStatus = status === "pending" ? "PENDING" : status === "accepted" ? "ACCEPTED" : "REJECTED";
+
   const suggestions = await prisma.gameSuggestion.findMany({
-    where: { status: status.toUpperCase() as "PENDING" | "ACCEPTED" | "REJECTED" },
+    where: { status: { equals: prismaStatus } },
     orderBy: { createdAt: "desc" },
     include: {
       createdBy: { include: { user: true } },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requestLoginOtp } from "@/lib/auth";
+import { BlockedUserError, requestLoginOtp } from "@/lib/auth";
+import { DisposableEmailError } from "@/lib/disposable-email";
 
 export async function POST(request: Request) {
   console.log("🚀 OTP Request received");
@@ -19,6 +20,15 @@ export async function POST(request: Request) {
     console.log("✅ OTP request completed successfully");
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof DisposableEmailError) {
+      console.warn("🚫 Disposable email blocked:", email);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof BlockedUserError) {
+      console.warn("⛔ Blocked account attempted OTP request:", email);
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
     console.error("❌ Failed to request OTP", error);
     return NextResponse.json({ error: "Failed to send OTP" }, { status: 500 });
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyOtpAndGetUser } from "@/lib/auth";
+import { BlockedUserError, verifyOtpAndGetUser } from "@/lib/auth";
+import { DisposableEmailError } from "@/lib/disposable-email";
 import { createSession } from "@/lib/session";
 import { resolveAppBaseUrl } from "@/lib/url";
 
@@ -23,7 +24,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(responseUrl);
   }
 
-  const user = await verifyOtpAndGetUser(email, code);
+  let user;
+  try {
+    user = await verifyOtpAndGetUser(email, code);
+  } catch (error) {
+    const responseUrl = new URL("/", baseUrl);
+    if (error instanceof DisposableEmailError) {
+      responseUrl.searchParams.set("error", "disposable_email");
+    } else if (error instanceof BlockedUserError) {
+      responseUrl.searchParams.set("error", "blocked");
+    } else {
+      responseUrl.searchParams.set("error", "invalid_code");
+    }
+    return NextResponse.redirect(responseUrl);
+  }
 
   if (!user) {
     const responseUrl = new URL("/", baseUrl);

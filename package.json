@@ -24,7 +24,8 @@
     "deploy:vps": "./scripts/deploy.sh",
     "seed:preferences": "tsx prisma/seeds/preferenceOptions.ts",
     "generate:fakes": "tsx scripts/create-fake-matches.ts",
-    "generate:game-embeddings": "tsx scripts/generate-game-embeddings.ts"
+    "generate:game-embeddings": "tsx scripts/generate-game-embeddings.ts",
+    "update:disposable-emails": "tsx scripts/update-disposable-email-list.ts"
   },
   "prisma": {
     "seed": "pnpm db:seed"

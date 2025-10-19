@@ -2,6 +2,14 @@ import crypto from "crypto";
 import { resolveAppBaseUrl } from "@/lib/url";
 import { transporter, SMTP_FROM } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
+import { DisposableEmailError, isDisposableEmail } from "@/lib/disposable-email";
+
+export class BlockedUserError extends Error {
+  constructor(message = "This account has been blocked by an administrator") {
+    super(message);
+    this.name = "BlockedUserError";
+  }
+}
 
 const OTP_EXPIRATION_MINUTES = Number(process.env.OTP_EXPIRATION_MINUTES ?? 10);
 const APP_BASE_URL = resolveAppBaseUrl(
@@ -22,6 +30,22 @@ const hashOtpCode = (code: string) =>
 export async function requestLoginOtp(email: string, redirect?: string) {
   console.log("🔧 Starting requestLoginOtp for:", email);
   const normalizedEmail = normalizeEmail(email);
+
+  if (isDisposableEmail(normalizedEmail)) {
+    console.log("🚫 Disposable email rejected:", normalizedEmail);
+    throw new DisposableEmailError();
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    include: { profile: true },
+  });
+
+  if (existingUser?.profile?.isShadowbanned) {
+    console.log("🚫 Blocked account attempted login:", normalizedEmail);
+    throw new BlockedUserError();
+  }
+
   const code = generateOtpCode();
   const tokenHash = hashOtpCode(code);
   const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000);
@@ -127,6 +151,11 @@ export async function requestLoginOtp(email: string, redirect?: string) {
 
 export async function verifyOtpAndGetUser(email: string, code: string) {
   const normalizedEmail = normalizeEmail(email);
+  
+  if (isDisposableEmail(normalizedEmail)) {
+    console.log("🚫 Disposable email rejected during verification:", normalizedEmail);
+    throw new DisposableEmailError();
+  }
   const tokenHash = hashOtpCode(code);
 
   const otpToken = await prisma.otpToken.findFirst({
@@ -165,6 +194,11 @@ export async function verifyOtpAndGetUser(email: string, code: string) {
       profile: true,
     },
   });
+
+  if (user.profile?.isShadowbanned) {
+    console.log("🚫 Blocked account attempted verification:", normalizedEmail);
+    throw new BlockedUserError();
+  }
 
   return user;
 }

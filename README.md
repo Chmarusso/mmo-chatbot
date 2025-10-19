@@ -27,6 +27,8 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
 - Self-service data export that bundles your direct and guild messages.
 - Guild events with photos, online/offline locations, scheduling, and multi-channel alerts (email/SMS/Discord/Telegram).
 - Auto-generated OG preview cards for players, guilds, and events.
+- Admin user management dashboard with search, blocking, and account removal capabilities.
+- Disposable email blocking prevents temporary email addresses during registration and login.
 - Rich sample seed that provisions guardian/kid accounts, a starter guild, badges/events, and 100 randomized pilots (complete with DiceBear avatars) for instant matchmaking demos.
 
 ## Tech Stack
@@ -112,6 +114,7 @@ MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adve
 | `pnpm generate:guild-codes <amount>` | Bulk-generate guild creation codes with 30-day expiry. |
 | `pnpm seed:preferences` | Populate lookup tables for games, time slots, languages, and playstyles. |
 | `pnpm generate:fakes <profileId> [count]` | Create demo matches for a given profile (default count: 5). |
+| `pnpm update:disposable-emails` | Update the disposable email domain blocklist from public sources. |
 | `pnpm exec prisma migrate dev --name <label>` | Apply schema changes locally and generate migrations. |
 | `pnpm exec prisma migrate deploy` | Apply pending migrations in production/CI. |
 | `pnpm exec prisma generate` | Regenerate the Prisma client after schema edits. |
@@ -138,6 +141,8 @@ app/
   settings/              Session + account management
   feedback/              In-app feedback submission form
   api/                   Route handlers (auth, profile, swipes, messages, account, analytics)
+    admin/
+      users/[userId]/    Block, unblock, and delete user accounts (admin only)
     analytics/
       players/           Player summary metrics
       preferences/       Preference distributions for dashboards
@@ -169,8 +174,9 @@ app/
   admin/
     game-suggestions/    Admin queue for new game requests
     game-update-suggestions/ Admin queue for metadata updates
-components/              UI primitives, swipe deck, chat room, forms, game ratings/comments
-lib/                     Prisma client, auth/session helpers, mailer
+    users/               Admin user management dashboard
+components/              UI primitives, swipe deck, chat room, forms, game ratings/comments, admin tools
+lib/                     Prisma client, auth/session helpers, mailer, disposable email detection
 middleware.ts            Session guard + redirect rules
 prisma/schema.prisma     Database schema and enums
 public/uploads/          Local avatar storage (created at runtime)
@@ -226,8 +232,9 @@ The embedding generator:
 - Shows progress and estimates remaining time
 
 ## Core Application Flow
-- **Login**: `/api/auth/request-otp` hashes the OTP, stores it with expiry, and emails (or logs) the code plus magic link. `/auth/callback` verifies the code and issues a session cookie stored under `mmo_match_session`.
+- **Login**: `/api/auth/request-otp` validates the email against a disposable email blocklist, hashes the OTP, stores it with expiry, and emails (or logs) the code plus magic link. Blocked accounts are rejected immediately. `/auth/callback` verifies the code and issues a session cookie stored under `mmo_match_session`.
 - **Profiles**: `lib/profile.ts` ensures every authenticated user has a profile row. Preference enums mirror the options rendered in the UI to keep data constrained, and the `isVerified` flag gates guild creation. Profile includes theme preference (light/dark/system) for UI customization.
+- **Admin Tools**: `/admin/users` provides a searchable dashboard for admins to block or remove user accounts. Blocking immediately signs users out and prevents future logins. `/api/admin/users/[userId]` handles block/unblock/delete operations with admin permission checks.
 - **Games**: `/games` displays all supported MMOs in a grid layout. Each game links to `/games/{game-slug}` showing detailed information, community ratings (1-5 stars), user comments, and a list of active players. Game badges throughout the app are clickable links to their respective game pages.
 - **Guilds**: `/api/guilds` lets verified players spin up invite-only guilds using paid creation codes, `/api/guilds/[guildId]/invites` mints one-hour QR invites, `/api/guild-codes/pay` records EVM payments (ETH/ERC-20 on any chain), and `/api/guilds/join` handles membership via invite codes with nickname overrides. `/api/guilds/[guildId]/messages` powers real-time guild chat.
 - **Moderation**: `/api/moderation/shadowban` toggles shadowbans (requires `MODERATION_SECRET` header) and `/api/moderation/review` runs an OpenRouter LLM scan across a player’s last 10 messages, auto-shadowbanning on abusive or spammy content.
