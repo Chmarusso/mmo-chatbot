@@ -140,6 +140,8 @@ model Game {
   ragProfile  Json?
   sourceUrls  Json?
   categoryId  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
 
   // Vector embedding fields for semantic search
   embedding   Unsupported("vector(1536)")?

@@ -15,7 +15,7 @@ test('login page renders the passwordless form', async ({ page }) => {
   await page.goto('/auth/login');
 
   await expect(page).toHaveTitle(/Log in | MMOPLAYA/i);
-  await expect(page.getByRole('heading', { name: /Log in with a magic link/i })).toBeVisible();
+  await expect(page.getByText(/Enter your email to receive code or login link/i)).toBeVisible();
   await expect(page.getByPlaceholder('you@ProbablyGmail.com')).toBeVisible();
   await expect(page.getByRole('button', { name: /Let me in/i })).toBeVisible();
 });
