@@ -14,7 +14,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(chmod:*)",
-      "Bash(pnpm db:dump:*)"
+      "Bash(pnpm db:dump:*)",
+      "Bash(npm run test:e2e)",
+      "Bash(npx playwright test companion-onboarding.spec.ts)",
+      "Bash(npx playwright test companion-onboarding.spec.ts --timeout=60000)"
     ],
     "deny": [],
     "ask": []
