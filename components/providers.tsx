@@ -8,52 +8,13 @@ import { MatchBadgeProvider } from "@/components/MatchBadgeProvider";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 
-function ThemeProvider({ children, theme: serverTheme }: { children: ReactNode; theme?: string }) {
-  const [theme, setTheme] = React.useState(serverTheme || "system");
-
-  // Listen for theme changes from localStorage
+function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    const handleThemeChange = (e: CustomEvent) => {
-      setTheme(e.detail);
-    };
-
-    window.addEventListener('themeChange', handleThemeChange as EventListener);
-
-    // Check localStorage on mount
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme) {
-      setTheme(storedTheme);
-    }
-
-    return () => {
-      window.removeEventListener('themeChange', handleThemeChange as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
+    // Always enforce dark mode
     const root = document.documentElement;
-    const effectiveTheme = theme || "system";
-
-    console.log("ThemeProvider applying theme:", effectiveTheme);
-
-    if (effectiveTheme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const applySystemTheme = () => {
-        root.classList.remove("light", "dark");
-        root.classList.add(mediaQuery.matches ? "dark" : "light");
-        console.log("System theme applied:", mediaQuery.matches ? "dark" : "light");
-      };
-
-      applySystemTheme();
-      mediaQuery.addEventListener("change", applySystemTheme);
-
-      return () => mediaQuery.removeEventListener("change", applySystemTheme);
-    } else {
-      root.classList.remove("light", "dark");
-      root.classList.add(effectiveTheme);
-      console.log("Theme class applied:", effectiveTheme);
-    }
-  }, [theme]);
+    root.classList.remove("light", "system");
+    root.classList.add("dark");
+  }, []);
 
   return <>{children}</>;
 }
@@ -74,9 +35,9 @@ const queryClient = new QueryClient({
   },
 });
 
-export function Providers({ children, theme }: { children: ReactNode; theme?: string }) {
+export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <MatchBadgeProvider>
           <div className="min-h-screen flex flex-col">

@@ -14,8 +14,6 @@ interface SettingsPanelProps {
 export function SettingsPanel({ profile }: SettingsPanelProps) {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [theme, setTheme] = useState(profile.theme || "system");
-  const [isUpdatingTheme, setIsUpdatingTheme] = useState(false);
   const [notifyOnNewMatch, setNotifyOnNewMatch] = useState(profile.notifyOnNewMatch);
   const [notifyOnNewMessage, setNotifyOnNewMessage] = useState(profile.notifyOnNewMessage);
   const [notifyOnAnnouncements, setNotifyOnAnnouncements] = useState(profile.notifyOnAnnouncements);
@@ -70,40 +68,6 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
     }
   };
 
-  const handleThemeUpdate = async (newTheme: string) => {
-    setTheme(newTheme);
-    setIsUpdatingTheme(true);
-
-    // Update localStorage immediately for instant UI change
-    localStorage.setItem('theme', newTheme);
-
-    // Dispatch custom event to notify ThemeProvider
-    window.dispatchEvent(new CustomEvent('themeChange', { detail: newTheme }));
-
-    try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme: newTheme }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Failed to update theme");
-      }
-
-      toast.success("Theme updated");
-    } catch (error) {
-      console.error(error);
-      toast.error(error instanceof Error ? error.message : "Failed to update theme");
-      setTheme(profile.theme || "system");
-      localStorage.setItem('theme', profile.theme || "system");
-      window.dispatchEvent(new CustomEvent('themeChange', { detail: profile.theme || "system" }));
-    } finally {
-      setIsUpdatingTheme(false);
-    }
-  };
-
   const handleNotificationsUpdate = async () => {
     setIsUpdatingNotifications(true);
 
@@ -135,47 +99,6 @@ export function SettingsPanel({ profile }: SettingsPanelProps) {
   return (
     <div className="space-y-6 rounded-3xl border border-accent-purple/30 bg-surface/80 p-6">
       <div>
-        <h2 className="text-lg font-semibold">Appearance</h2>
-        <p className="text-sm text-gray-400">
-          Choose how MMOPLAYA looks on your device.
-        </p>
-        <div className="mt-4 flex gap-3">
-          <button
-            onClick={() => handleThemeUpdate("light")}
-            disabled={isUpdatingTheme}
-            className={`flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition ${
-              theme === "light"
-                ? "border-accent-cyan bg-accent-cyan/10 text-accent-cyan"
-                : "border-gray-600 text-gray-400 hover:border-gray-500"
-            }`}
-          >
-            Light
-          </button>
-          <button
-            onClick={() => handleThemeUpdate("dark")}
-            disabled={isUpdatingTheme}
-            className={`flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition ${
-              theme === "dark"
-                ? "border-accent-cyan bg-accent-cyan/10 text-accent-cyan"
-                : "border-gray-600 text-gray-400 hover:border-gray-500"
-            }`}
-          >
-            Dark
-          </button>
-          <button
-            onClick={() => handleThemeUpdate("system")}
-            disabled={isUpdatingTheme}
-            className={`flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition ${
-              theme === "system"
-                ? "border-accent-cyan bg-accent-cyan/10 text-accent-cyan"
-                : "border-gray-600 text-gray-400 hover:border-gray-500"
-            }`}
-          >
-            System
-          </button>
-        </div>
-      </div>
-      <div className="border-t border-accent-cyan/10 pt-6">
         <h2 className="text-lg font-semibold">Session</h2>
         <p className="text-sm text-gray-400">
           Sign out of MMOPLAYA on this device.
