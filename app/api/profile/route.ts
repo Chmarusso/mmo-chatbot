@@ -90,12 +90,28 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "This profile already has an invite code applied." }, { status: 400 });
     }
 
-    const inviteRecord = await prisma.inviteCode.findUnique({ where: { code: normalized } });
+    const inviteRecord = await prisma.inviteCode.findUnique({
+      where: { code: normalized },
+      include: {
+        usageLogs: {
+          where: { profileId: existing.id },
+        },
+      },
+    });
 
     if (!inviteRecord) {
       return NextResponse.json({ error: "That invite code doesn't exist." }, { status: 400 });
     }
 
+    // Check if user has already used this code
+    const alreadyUsed = inviteRecord.usageLogs.length > 0;
+
+    // Check if code has reached max uses
+    if (inviteRecord.usageCount >= inviteRecord.maxUses && !alreadyUsed) {
+      return NextResponse.json({ error: "That invite code has reached its usage limit." }, { status: 400 });
+    }
+
+    // For backward compatibility: check old single-use claim system
     if (inviteRecord.claimedByProfileId && inviteRecord.claimedByProfileId !== existing.id) {
       return NextResponse.json({ error: "That invite code has already been used." }, { status: 400 });
     }
@@ -104,7 +120,7 @@ export async function PUT(request: Request) {
     inviteToClaim = {
       id: inviteRecord.id,
       code: inviteRecord.code,
-      alreadyClaimed: inviteRecord.claimedByProfileId === existing.id,
+      alreadyClaimed: alreadyUsed || inviteRecord.claimedByProfileId === existing.id,
     };
   }
 
@@ -174,23 +190,23 @@ export async function PUT(request: Request) {
       });
 
       if (inviteToClaim && !inviteToClaim.alreadyClaimed) {
-        const claimResult = await tx.inviteCode.updateMany({
-          where: {
-            id: inviteToClaim.id,
-            OR: [
-              { claimedByProfileId: null },
-              { claimedByProfileId: existing.id },
-            ],
-          },
+        // Create usage log
+        await tx.inviteCodeUsage.create({
           data: {
+            inviteCodeId: inviteToClaim.id,
+            profileId: existing.id,
+          },
+        });
+
+        // Increment usage count
+        await tx.inviteCode.update({
+          where: { id: inviteToClaim.id },
+          data: {
+            usageCount: { increment: 1 },
             claimedByProfileId: existing.id,
             claimedAt: new Date(),
           },
         });
-
-        if (claimResult.count === 0) {
-          throw new Error("InviteCodeClaimFailed");
-        }
       }
 
       if (Object.keys(changeSet).length > 0) {

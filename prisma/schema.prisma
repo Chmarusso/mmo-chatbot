@@ -99,16 +99,36 @@ model Profile {
   suggestionsHandled GameSuggestion[] @relation("SuggestionHandler")
   gameUpdateSuggestionsCreated GameUpdateSuggestion[] @relation("GameUpdateAuthor")
   gameUpdateSuggestionsHandled GameUpdateSuggestion[] @relation("GameUpdateHandler")
+  inviteCodeUsages InviteCodeUsage[] @relation("InviteCodeUsages")
 }
 
 model InviteCode {
-  id                 String   @id @default(uuid())
-  code               String   @unique @db.VarChar(32)
-  createdAt          DateTime @default(now())
+  id                 String              @id @default(uuid())
+  code               String              @unique @db.VarChar(32)
+  maxUses            Int                 @default(1)
+  usageCount         Int                 @default(0)
+  createdAt          DateTime            @default(now())
   claimedAt          DateTime?
-  claimedByProfileId String?  @unique
+  claimedByProfileId String?             @unique
 
-  claimedBy Profile? @relation("InviteCodeClaimer", fields: [claimedByProfileId], references: [id], onDelete: SetNull)
+  claimedBy          Profile?            @relation("InviteCodeClaimer", fields: [claimedByProfileId], references: [id], onDelete: SetNull)
+  usageLogs          InviteCodeUsage[]
+
+  @@index([code, usageCount, maxUses])
+}
+
+model InviteCodeUsage {
+  id             String     @id @default(uuid())
+  inviteCodeId   String
+  profileId      String
+  usedAt         DateTime   @default(now())
+
+  inviteCode     InviteCode @relation(fields: [inviteCodeId], references: [id], onDelete: Cascade)
+  profile        Profile    @relation("InviteCodeUsages", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([inviteCodeId])
+  @@index([profileId])
+  @@index([usedAt])
 }
 
 model GameCategory {

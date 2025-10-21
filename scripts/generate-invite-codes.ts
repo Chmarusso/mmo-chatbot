@@ -4,7 +4,7 @@ import { generateInviteCode } from "@/lib/invite";
 const prisma = new PrismaClient();
 
 function usage() {
-  console.log("Usage: pnpm generate:invites <amount> [--prefix=INVITE] [--length=6]");
+  console.log("Usage: pnpm generate:invites <amount> [--prefix=INVITE] [--length=6] [--max-uses=1]");
 }
 
 async function main() {
@@ -23,6 +23,7 @@ async function main() {
 
   let prefix: string | undefined;
   let length: number | undefined;
+  let maxUses = 1;
 
   for (const arg of rest) {
     if (arg.startsWith("--prefix=")) {
@@ -35,6 +36,12 @@ async function main() {
       const value = Number(arg.split("=")[1]);
       if (Number.isInteger(value) && value > 0 && value <= 16) {
         length = value;
+      }
+    }
+    if (arg.startsWith("--max-uses=")) {
+      const value = Number(arg.split("=")[1]);
+      if (Number.isInteger(value) && value > 0) {
+        maxUses = value;
       }
     }
   }
@@ -52,6 +59,7 @@ async function main() {
           await tx.inviteCode.create({
             data: {
               code: candidate,
+              maxUses: maxUses,
             },
           });
           createdCode = candidate;
