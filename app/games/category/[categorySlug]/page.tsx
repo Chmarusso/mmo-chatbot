@@ -130,7 +130,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {category.games.map((game) => (
             <Link key={game.value} href={`/games/${game.value.replace(/_/g, '-')}`}>
-              <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
+              <article className="flex h-full flex-col overflow-hidden rounded-[0.4em] border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
                 {game.screenshot && (
                   <div className="relative h-40 w-full">
                     <Image

@@ -32,7 +32,7 @@ export default async function GamesPage() {
         <div className="flex items-center justify-center gap-3 lg:justify-start">
           <Link
             href="/games/suggest"
-            className="inline-flex items-center rounded-full border border-accent-cyan/40 px-4 py-2 text-sm font-semibold text-accent-cyan transition hover:bg-accent-cyan/15"
+            className="inline-flex items-center rounded-[0.4em] border border-accent-cyan/40 px-4 py-2 text-sm font-semibold text-accent-cyan transition hover:bg-accent-cyan/15"
           >
             Suggest a game
           </Link>
@@ -56,7 +56,7 @@ export default async function GamesPage() {
       {/* Games Grid */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {games.map((game) => (
-          <article key={game.value} className="flex h-full flex-col overflow-hidden rounded-3xl border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
+          <article key={game.value} className="flex h-full flex-col overflow-hidden rounded-[0.4em] border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
             <Link href={`/games/${game.value.replace(/_/g, '-')}`} className="flex flex-col flex-1">
               {game.screenshot && (
                 <div className="relative h-40 w-full">

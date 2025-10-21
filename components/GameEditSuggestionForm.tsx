@@ -275,12 +275,12 @@ export function GameEditSuggestionForm({ gameValue, gameLabel }: GameEditSuggest
       </div>
 
       {submittedId && (
-        <div className="rounded-2xl border border-accent-cyan/30 bg-accent-cyan/10 p-3 text-sm text-accent-cyan">
+        <div className="rounded-[0.4em] border border-accent-cyan/30 bg-accent-cyan/10 p-3 text-sm text-accent-cyan">
           Update received! Our admins will review and apply it if it improves the listing.
         </div>
       )}
 
-      <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl">
+      <Button type="submit" disabled={isSubmitting} className="w-full rounded-[0.4em]">
         {isSubmitting ? "Sending..." : "Submit update"}
       </Button>
     </form>

@@ -30,14 +30,14 @@ export function SwipeDeck({ profiles }: SwipeDeckProps) {
   const showUndoToast = (entry: { profile: Profile; direction: "yes" | "no" }) => {
     const message = entry.direction === "yes" ? "Sent squad invite" : "Passed on player";
     const toastId = toast.custom((t) => (
-      <div className="flex items-center gap-3 rounded-2xl border border-accent-cyan/30 bg-surface/90 px-4 py-3 text-sm text-gray-100 shadow-glow">
+      <div className="flex items-center gap-3 rounded-[0.4em] border border-accent-cyan/30 bg-surface/90 px-4 py-3 text-sm text-gray-100 shadow-glow">
         <div className="flex-1">
           <p className="font-medium">{message}</p>
           <p className="text-xs text-gray-400">Tap undo to bring them back.</p>
         </div>
         <button
           type="button"
-          className="rounded-full border border-accent-cyan/50 px-3 py-1 text-xs font-semibold text-accent-cyan transition hover:bg-accent-cyan/10"
+          className="rounded-[0.4em] border border-accent-cyan/50 px-3 py-1 text-xs font-semibold text-accent-cyan transition hover:bg-accent-cyan/10"
           onClick={() => undoSwipe(entry, t.id)}
         >
           Undo
@@ -125,7 +125,7 @@ export function SwipeDeck({ profiles }: SwipeDeckProps) {
 
   if (!profiles.length) {
     return (
-      <div className="flex h-full min-h-[400px] flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-accent-cyan/30 bg-surface/60 p-8 text-center lg:min-h-[480px] lg:p-12">
+      <div className="flex h-full min-h-[400px] flex-col items-center justify-center gap-3 rounded-[0.4em] border border-dashed border-accent-cyan/30 bg-surface/60 p-8 text-center lg:min-h-[480px] lg:p-12">
         <h3 className="text-lg font-semibold lg:text-2xl">No squads yet</h3>
         <p className="text-sm text-gray-400 lg:max-w-md lg:text-base">
           Expand your preferences or check back soon. New heroes appear every day.

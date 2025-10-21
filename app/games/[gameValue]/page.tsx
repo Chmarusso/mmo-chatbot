@@ -109,7 +109,7 @@ export default async function GamePage({ params }: GamePageProps) {
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <Link
             href={`/games/${game.value.replace(/_/g, '-')}/suggest-edit`}
-            className="inline-flex items-center rounded-full border border-accent-cyan/40 px-4 py-1.5 text-accent-cyan transition hover:bg-accent-cyan/15"
+            className="inline-flex items-center rounded-[0.4em] border border-accent-cyan/40 px-4 py-1.5 text-accent-cyan transition hover:bg-accent-cyan/15"
           >
             Suggest an edit
           </Link>
@@ -118,7 +118,7 @@ export default async function GamePage({ params }: GamePageProps) {
 
       {/* Screenshot Section */}
       {game.screenshot && (
-        <section className="relative h-64 w-full overflow-hidden rounded-3xl border border-accent-purple/20 lg:h-96">
+        <section className="relative h-64 w-full overflow-hidden rounded-[0.4em] border border-accent-purple/20 lg:h-96">
           <Image
             src={game.screenshot}
             alt={game.label}
@@ -136,7 +136,7 @@ export default async function GamePage({ params }: GamePageProps) {
         <section className="space-y-6 lg:col-span-2">
           {/* Description */}
           {game.description && (
-            <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-6">
+            <div className="rounded-[0.4em] border border-accent-purple/20 bg-surface/80 p-6">
               <h2 className="mb-3 text-xl font-semibold text-white">About</h2>
               <div className="prose prose-invert prose-sm max-w-none">
                 <ReactMarkdown
@@ -186,7 +186,7 @@ export default async function GamePage({ params }: GamePageProps) {
 
           {/* Rating Section - Only for authenticated users */}
           {currentUser && (
-            <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-6">
+            <div className="rounded-[0.4em] border border-accent-purple/20 bg-surface/80 p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-white">Community Rating</h2>
                 <div className="flex items-center gap-2">
@@ -209,18 +209,18 @@ export default async function GamePage({ params }: GamePageProps) {
         {/* Sidebar */}
         <aside className="space-y-6">
           {/* Actions */}
-          <div className="space-y-3 rounded-3xl border border-accent-purple/20 bg-surface/80 p-6">
+          <div className="space-y-3 rounded-[0.4em] border border-accent-purple/20 bg-surface/80 p-6">
             {currentUser ? (
               <Link
                 href="/profile"
-                className="block w-full rounded-full bg-accent-purple px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-accent-purple/80"
+                className="block w-full rounded-[0.4em] bg-accent-purple px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-accent-purple/80"
               >
                 Set as Your Game
               </Link>
             ) : (
               <Link
                 href="/auth/login"
-                className="block w-full rounded-full bg-accent-purple px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-accent-purple/80"
+                className="block w-full rounded-[0.4em] bg-accent-purple px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-accent-purple/80"
               >
                 Join to Play
               </Link>
@@ -230,7 +230,7 @@ export default async function GamePage({ params }: GamePageProps) {
                 href={`/api/games/${gameValue}/visit`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-full border border-accent-purple/40 px-4 py-3 text-sm font-medium text-text-secondary transition hover:border-accent-purple hover:text-accent-purple"
+                className="flex items-center justify-center gap-2 rounded-[0.4em] border border-accent-purple/40 px-4 py-3 text-sm font-medium text-text-secondary transition hover:border-accent-purple hover:text-accent-purple"
               >
                 Visit Official Site
                 <ExternalLink size={16} />
@@ -240,7 +240,7 @@ export default async function GamePage({ params }: GamePageProps) {
 
           {/* Stats - Only for authenticated users */}
           {currentUser && (
-            <div className="rounded-3xl border border-accent-purple/20 bg-surface/80 p-6">
+            <div className="rounded-[0.4em] border border-accent-purple/20 bg-surface/80 p-6">
               <h3 className="mb-4 text-lg font-semibold text-white">Stats</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -272,7 +272,7 @@ export default async function GamePage({ params }: GamePageProps) {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {game.profiles.map((profile) => (
                   <Link key={profile.id} href={`/profile/${profile.id}`}>
-                    <article className="flex items-center gap-3 rounded-3xl border border-accent-purple/20 bg-surface/80 p-4 transition hover:border-accent-purple/40">
+                    <article className="flex items-center gap-3 rounded-[0.4em] border border-accent-purple/20 bg-surface/80 p-4 transition hover:border-accent-purple/40">
                       <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full">
                         <Image
                           src={resolveAvatarUrl(profile.avatarUrl)}
@@ -298,7 +298,7 @@ export default async function GamePage({ params }: GamePageProps) {
         </>
       ) : (
         /* Login prompt for unauthenticated users */
-        <section className="rounded-3xl border border-accent-purple/20 bg-gradient-to-br from-surface/80 to-accent-purple/5 p-8 text-center">
+        <section className="rounded-[0.4em] border border-accent-purple/20 bg-gradient-to-br from-surface/80 to-accent-purple/5 p-8 text-center">
           <div className="mb-4 text-6xl">👥</div>
           <h2 className="mb-3 text-2xl font-bold text-white">
             Want to connect with players?
@@ -308,7 +308,7 @@ export default async function GamePage({ params }: GamePageProps) {
           </p>
           <a
             href="/auth/login"
-            className="inline-block rounded-full bg-gradient-to-r from-accent-purple to-accent-pink px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:shadow-xl"
+            className="inline-block rounded-[0.4em] bg-gradient-to-r from-accent-purple to-accent-pink px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-105 hover:shadow-xl"
           >
             Join the Community
           </a>

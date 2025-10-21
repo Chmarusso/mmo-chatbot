@@ -37,7 +37,7 @@ export default async function SuggestEditPage({ params }: PageProps) {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-accent-cyan/30 bg-surface/80 p-6 shadow-glow lg:p-10">
+      <section className="rounded-[0.4em] border border-accent-cyan/30 bg-surface/80 p-6 shadow-glow lg:p-10">
         <GameEditSuggestionForm gameValue={game.value} gameLabel={game.label} />
       </section>
     </main>

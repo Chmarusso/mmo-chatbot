@@ -46,6 +46,7 @@ export default async function DashboardPage() {
       include: {
         user: true,
       },
+      orderBy: { updatedAt: "desc" },
       take: 50,
     });
 

@@ -38,7 +38,7 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
   return (
     <motion.div
       className={cn(
-        "absolute inset-0 flex flex-col rounded-3xl border border-accent-cyan/20 bg-surface/90 p-6 shadow-glow lg:p-10"
+        "absolute inset-0 flex flex-col rounded-[0.4em] border border-accent-cyan/20 bg-surface/90 p-6 shadow-glow lg:p-10"
       )}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
@@ -76,7 +76,7 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
           {profile.gamePref && (
             <Link
               href={`/games/${profile.gamePref.replace(/_/g, '-')}`}
-              className="inline-flex items-center rounded-full bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
+              className="inline-flex items-center rounded-[0.4em] bg-accent-purple/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent-purple transition hover:bg-accent-purple/30"
               onClick={(e) => e.stopPropagation()}
             >
               {preferenceLabel(profile.gamePref, gameOptions)}
@@ -106,7 +106,7 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
               href={profile.twitterLink.startsWith("http") ? profile.twitterLink : `https://twitter.com/${profile.twitterLink.replace(/^@/, "")}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-accent-cyan/40 px-3 py-1 text-xs text-accent-cyan transition hover:bg-accent-cyan/10 lg:px-4 lg:py-1.5 lg:text-sm"
+              className="rounded-[0.4em] border border-accent-cyan/40 px-3 py-1 text-xs text-accent-cyan transition hover:bg-accent-cyan/10 lg:px-4 lg:py-1.5 lg:text-sm"
             >
               Twitter
             </a>
@@ -116,7 +116,7 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
               href={profile.redditLink.startsWith("http") ? profile.redditLink : `https://reddit.com/${profile.redditLink}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-accent-purple/40 px-3 py-1 text-xs text-accent-purple transition hover:bg-accent-purple/10 lg:px-4 lg:py-1.5 lg:text-sm"
+              className="rounded-[0.4em] border border-accent-purple/40 px-3 py-1 text-xs text-accent-purple transition hover:bg-accent-purple/10 lg:px-4 lg:py-1.5 lg:text-sm"
             >
               Reddit
             </a>
@@ -127,14 +127,14 @@ export function SwipeCard({ profile, onSwipe, swipeDirection }: SwipeCardProps) 
         <button
           type="button"
           onClick={() => onSwipe("no")}
-          className="rounded-2xl border border-red-500/40 bg-red-500/10 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20 lg:py-4 lg:text-base"
+          className="rounded-[0.4em] border border-red-500/40 bg-red-500/10 py-3 text-sm font-medium text-red-300 transition hover:bg-red-500/20 lg:py-4 lg:text-base"
         >
           Pass
         </button>
         <button
           type="button"
           onClick={() => onSwipe("yes")}
-          className="rounded-2xl border border-accent-cyan/40 bg-accent-cyan/20 py-3 text-sm font-medium text-accent-cyan transition hover:bg-accent-cyan/30 lg:py-4 lg:text-base"
+          className="rounded-[0.4em] border border-accent-cyan/40 bg-accent-cyan/20 py-3 text-sm font-medium text-accent-cyan transition hover:bg-accent-cyan/30 lg:py-4 lg:text-base"
         >
           Squad Up
         </button>

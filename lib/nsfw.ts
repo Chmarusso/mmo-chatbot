@@ -1,10 +1,19 @@
 import OpenAI from "openai";
 
-const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const isTestRun = process.env.NODE_ENV === "test" || process.env.PLAYWRIGHT_TEST === "true";
+const client =
+  !isTestRun && process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 export async function isImageSafe(dataUrl: string): Promise<boolean> {
   if (!client) {
-    console.warn("NSFW check skipped: OPENAI_API_KEY not set");
+    if (!isTestRun) {
+      console.warn("NSFW check skipped: OPENAI_API_KEY not set");
+    }
+    return true;
+  }
+
+  if (isTestRun) {
+    console.info("NSFW check skipped during test run");
     return true;
   }
 

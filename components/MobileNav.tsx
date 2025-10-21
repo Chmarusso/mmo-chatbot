@@ -41,7 +41,7 @@ export function MobileNav({ active }: MobileNavProps) {
     }[visibleLinks.length] ?? "grid-cols-6";
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto w-full max-w-3xl rounded-t-3xl border border-accent-cyan/20 bg-surface/90 backdrop-blur lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto w-full max-w-3xl rounded-t-[0.4em] border border-accent-cyan/20 bg-surface/90 backdrop-blur lg:hidden">
       <ul className={cn("grid gap-1 p-2", columnClass)}>
         {visibleLinks.map((link) => {
           const Icon = link.icon;
@@ -54,7 +54,7 @@ export function MobileNav({ active }: MobileNavProps) {
               <Link
                 href={link.href}
                 className={cn(
-                  "flex flex-col items-center rounded-2xl px-2 py-2 text-xs transition",
+                  "flex flex-col items-center rounded-[0.4em] px-2 py-2 text-xs transition",
                   isActive
                     ? "bg-accent-cyan/10 text-accent-cyan shadow-glow"
                     : "text-gray-400 hover:text-white"

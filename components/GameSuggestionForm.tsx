@@ -104,14 +104,14 @@ export function GameSuggestionForm({ className }: GameSuggestionFormProps) {
       </div>
 
       {submittedSuggestionId && (
-        <div className="rounded-2xl border border-accent-cyan/30 bg-accent-cyan/10 p-3 text-sm text-accent-cyan">
+        <div className="rounded-[0.4em] border border-accent-cyan/30 bg-accent-cyan/10 p-3 text-sm text-accent-cyan">
           We got your suggestion! You can submit more titles any time.
         </div>
       )}
 
       <Button
         type="submit"
-        className="w-full rounded-2xl bg-accent-cyan text-background hover:bg-accent-cyan/90"
+        className="w-full rounded-[0.4em] bg-accent-cyan text-background hover:bg-accent-cyan/90"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Sending..." : "Send suggestion"}

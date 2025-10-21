@@ -40,7 +40,7 @@ export function DesktopNav({ active }: DesktopNavProps) {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition",
+                  "rounded-[0.4em] px-4 py-2 text-sm font-medium transition",
                   isActive
                     ? "bg-accent-cyan/20 text-accent-cyan shadow-glow"
                     : "text-gray-300 hover:bg-accent-cyan/10 hover:text-white"

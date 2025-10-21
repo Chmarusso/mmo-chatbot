@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ExpEventType } from "@prisma/client";
+import { Prisma, ExpEventType } from "@prisma/client";
 
 // EXP rewards for different activities
 export const EXP_REWARDS = {
@@ -98,23 +98,30 @@ export async function awardExp({
   const newLevel = calculateLevel(newTotalExp);
 
   // Award EXP and update level
-  const [updatedProfile] = await prisma.$transaction([
-    prisma.profile.update({
-      where: { id: profileId },
-      data: {
-        exp: newTotalExp,
-        level: newLevel,
-      },
-    }),
-    prisma.expEvent.create({
-      data: {
-        profileId,
-        eventType,
-        expGained: expAmount,
-        metadata: metadata || {},
-      },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.profile.update({
+        where: { id: profileId },
+        data: {
+          exp: newTotalExp,
+          level: newLevel,
+        },
+      }),
+      prisma.expEvent.create({
+        data: {
+          profileId,
+          eventType,
+          expGained: expAmount,
+          metadata: metadata || {},
+        },
+      }),
+    ]);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return null;
+    }
+    throw error;
+  }
 
   return {
     expGained: expAmount,
@@ -207,10 +214,14 @@ export async function checkDailyLogin(profileId: string): Promise<boolean> {
   }
 
   // Update last daily login and award EXP
-  await prisma.profile.update({
+  const updateResult = await prisma.profile.updateMany({
     where: { id: profileId },
     data: { lastDailyLogin: now },
   });
+
+  if (updateResult.count === 0) {
+    return false;
+  }
 
   await awardExp({
     profileId,

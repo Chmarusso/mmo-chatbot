@@ -69,7 +69,7 @@ export async function PUT(request: Request) {
     typeof payload.notifyOnAnnouncements === "boolean" ? payload.notifyOnAnnouncements : existing.notifyOnAnnouncements;
   const currentInviteCode = existing.inviteCode?.trim() ? existing.inviteCode.toUpperCase() : null;
   let resolvedInviteCode = currentInviteCode;
-  let inviteToClaim: { id: string; code: string; alreadyClaimed: boolean } | null = null;
+  let inviteToClaim: { id: string; code: string; alreadyClaimed: boolean; maxUses: number } | null = null;
 
   if (Object.prototype.hasOwnProperty.call(payload, "inviteCode")) {
     if (typeof payload.inviteCode !== "string") {
@@ -112,7 +112,12 @@ export async function PUT(request: Request) {
     }
 
     // For backward compatibility: check old single-use claim system
-    if (inviteRecord.claimedByProfileId && inviteRecord.claimedByProfileId !== existing.id) {
+    const isSingleUseCode = (inviteRecord.maxUses ?? 1) <= 1;
+    if (
+      isSingleUseCode &&
+      inviteRecord.claimedByProfileId &&
+      inviteRecord.claimedByProfileId !== existing.id
+    ) {
       return NextResponse.json({ error: "That invite code has already been used." }, { status: 400 });
     }
 
@@ -121,6 +126,7 @@ export async function PUT(request: Request) {
       id: inviteRecord.id,
       code: inviteRecord.code,
       alreadyClaimed: alreadyUsed || inviteRecord.claimedByProfileId === existing.id,
+      maxUses: inviteRecord.maxUses,
     };
   }
 
@@ -199,13 +205,18 @@ export async function PUT(request: Request) {
         });
 
         // Increment usage count
+        const inviteUpdateData: Prisma.InviteCodeUpdateInput = {
+          usageCount: { increment: 1 },
+          claimedAt: new Date(),
+        };
+
+        if ((inviteToClaim.maxUses ?? 1) <= 1) {
+          inviteUpdateData.claimedByProfileId = existing.id;
+        }
+
         await tx.inviteCode.update({
           where: { id: inviteToClaim.id },
-          data: {
-            usageCount: { increment: 1 },
-            claimedByProfileId: existing.id,
-            claimedAt: new Date(),
-          },
+          data: inviteUpdateData,
         });
       }
 

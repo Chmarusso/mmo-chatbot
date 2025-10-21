@@ -14,7 +14,7 @@ export function GameRecommendationCard({ game }: GameRecommendationCardProps) {
   return (
     <Link
       href={`/games/${permalink}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-accent-purple/30 bg-surface/60 shadow-md transition-all hover:border-accent-cyan/50 hover:shadow-glow sm:flex-row"
+      className="group flex flex-col overflow-hidden rounded-[0.4em] border border-accent-purple/30 bg-surface/60 shadow-md transition-all hover:border-accent-cyan/50 hover:shadow-glow sm:flex-row"
     >
       {/* Screenshot */}
       <div className="relative h-32 w-full flex-shrink-0 overflow-hidden bg-background/50 sm:h-auto sm:w-32">
