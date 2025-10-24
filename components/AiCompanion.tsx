@@ -92,7 +92,28 @@ export function AiCompanion() {
           profile: AiCompanionProfileSnapshot;
         };
         if (!interrupted) {
-          setMessages(payload.messages ?? []);
+          // Preserve recommendedGames from existing messages when polling
+          setMessages((prev) => {
+            const incomingMessages = payload.messages ?? [];
+
+            // Create a map of existing messages with their client-side data
+            const existingMap = new Map(
+              prev.map((msg) => [msg.id, msg])
+            );
+
+            // Merge incoming messages with existing client-side data
+            return incomingMessages.map((msg) => {
+              const existing = existingMap.get(msg.id);
+              // If message exists, preserve recommendedGames
+              if (existing?.recommendedGames) {
+                return {
+                  ...msg,
+                  recommendedGames: existing.recommendedGames,
+                };
+              }
+              return msg;
+            });
+          });
           setProfileSnapshot(payload.profile ?? null);
         }
       } catch (error) {
@@ -176,17 +197,63 @@ export function AiCompanion() {
       });
 
       const data = (await response.json().catch(() => ({}))) as
-        | { messages: AiMessage[]; profile?: AiCompanionProfileSnapshot }
+        | {
+            messages: AiMessage[];
+            profile?: AiCompanionProfileSnapshot;
+            relevantGames?: Array<{
+              value: string;
+              label: string;
+              description: string | null;
+              screenshot: string | null;
+              website: string | null;
+              category: { value: string; label: string } | null;
+              similarity: number;
+            }>;
+          }
         | { error: string };
 
       if (!response.ok || !("messages" in data)) {
         throw new Error("error" in data ? data.error : "Companion is unavailable right now.");
       }
 
-      // Replace the optimistic thinking bubble with the real assistant response
+      // Replace the optimistic messages with the real server response
+      // Attach relevant games to the assistant message
+      console.log("[AiCompanion] Received relevantGames:", data.relevantGames);
+
       setMessages((prev) => {
-        const withoutThinking = prev.filter((m) => m.id !== thinkingTempId);
-        return [...withoutThinking, ...(data.messages.filter((m) => m.role === "assistant"))];
+        // Remove both the optimistic user message and thinking indicator
+        const withoutOptimistic = prev.filter(
+          (m) => m.id !== userTempId && m.id !== thinkingTempId
+        );
+
+        // Get all messages from the server response
+        const serverMessages = data.messages;
+
+        // Find the assistant message and attach games if present
+        const messagesWithGames = serverMessages.map((msg) => {
+          if (
+            msg.role === "assistant" &&
+            data.relevantGames &&
+            data.relevantGames.length > 0
+          ) {
+            console.log(`[AiCompanion] Attaching ${data.relevantGames.length} games to assistant message`);
+            return {
+              ...msg,
+              recommendedGames: data.relevantGames,
+            };
+          }
+          return msg;
+        });
+
+        if (!data.relevantGames || data.relevantGames.length === 0) {
+          console.log("[AiCompanion] No games to attach:", {
+            hasGames: !!data.relevantGames,
+            gamesLength: data.relevantGames?.length,
+          });
+        }
+
+        // Preserve all previous messages (with their game cards) and add new ones
+        return [...withoutOptimistic, ...messagesWithGames];
       });
       if (data.profile) {
         setProfileSnapshot(data.profile);
@@ -233,8 +300,8 @@ export function AiCompanion() {
   );
 
   return (
-    <ChatContainer className="h-[600px] border-accent-purple/30 bg-surface/80 shadow-glow lg:h-[680px]">
-      <ChatHeader className="border-accent-purple/30 bg-surface/90">
+    <ChatContainer className="h-full flex flex-col border-accent-purple/30 bg-surface/80 shadow-glow">
+      <ChatHeader className="flex-shrink-0 border-accent-purple/30 bg-surface/90">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-cyan/20 text-accent-cyan">
             <Sparkles className="h-5 w-5" />
@@ -268,7 +335,7 @@ export function AiCompanion() {
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col">
                   <ChatBubbleMessage variant={msg.role === "user" ? "sent" : "received"}>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    <p className="whitespace-pre-wrap text-lg leading-relaxed">
                       {msg.isThinking ? (
                         <span className="inline-flex items-center gap-2 text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin text-accent-cyan" />
@@ -326,7 +393,7 @@ export function AiCompanion() {
           onSubmit={handleSubmit}
           isSubmitting={isSending}
           actionLabel={isSending ? "Sending…" : "Send"}
-          className="border-accent-purple/30"
+          className="flex-shrink-0 border-accent-purple/30"
           renderActions={() =>
             isSending ? (
               <Loader2 className="h-4 w-4 animate-spin text-accent-cyan" />

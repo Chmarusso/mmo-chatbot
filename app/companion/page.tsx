@@ -29,7 +29,7 @@ export default async function CompanionPage() {
   }
 
   return (
-    <main className="flex-1 px-4 py-6 pb-24 sm:px-6 lg:mx-auto lg:max-w-4xl lg:px-12 lg:py-12 lg:pb-12">
+    <main className="flex h-[calc(100vh-5rem)] flex-col overflow-hidden px-4 py-4 pb-24 sm:h-[calc(100vh-4rem)] sm:px-6 sm:pb-8 lg:mx-auto lg:max-w-7xl lg:h-[calc(100vh-5rem)] lg:px-8 lg:py-6 lg:pb-6">
       <AiCompanion />
     </main>
   );
