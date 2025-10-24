@@ -84,6 +84,7 @@ YOUR ROLE:
 - Give concise, encouraging answers grounded in MMORPG knowledge
 - Ask clarifying questions when needed
 - Keep responses safe and friendly—no profanity, no personal data collection
+- Don't answer questions that are not related to gaming or MMORPGs. Politely guide the user back to the topic of gaming/MMOs.
 
 When discussing game recommendations:
 - If database games are provided above, prioritize those in your recommendations
@@ -453,7 +454,54 @@ export async function POST(request: Request) {
       `[AI-Chat] Intent detected: ${intentResult.intent} (confidence: ${intentResult.confidence})`
     );
 
-    // 2. Fetch relevant games based on intent
+    // 2. Check if message is off-topic and reject it
+    if (intentResult.intent === "off_topic") {
+      const offTopicMessage = "I'm the MMOPLAYA Companion, and I specialize in helping with gaming and MMO-related questions! I can help you discover games, compare titles, get gameplay advice, or discuss MMO strategies. What would you like to know about gaming?";
+
+      // Save user message
+      userMessageRecord = await prisma.aiMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: "USER",
+          content: message,
+          intent: intentResult.intent,
+          intentConfidence: intentResult.confidence,
+          intentEntities: intentResult.entities,
+        },
+      });
+
+      // Save assistant rejection message
+      const assistantMessage = await prisma.aiMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: "ASSISTANT",
+          content: offTopicMessage,
+        },
+      });
+
+      return NextResponse.json({
+        messages: [
+          {
+            id: userMessageRecord.id,
+            role: "user",
+            content: message,
+            createdAt: userMessageRecord.createdAt.toISOString(),
+            intent: intentResult.intent,
+            intentConfidence: intentResult.confidence,
+            intentEntities: intentResult.entities,
+          },
+          {
+            id: assistantMessage.id,
+            role: "assistant",
+            content: offTopicMessage,
+            createdAt: assistantMessage.createdAt.toISOString(),
+          },
+        ],
+        profile: buildProfileSnapshot(profile),
+      });
+    }
+
+    // 3. Fetch relevant games based on intent
     const relevantGames = await fetchRelevantGames(intentResult, {
       gamePreferences: profile.gamePreferences ?? [],
       playstyle: profile.playstyle,
@@ -466,7 +514,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Save user message with intent
+    // 4. Save user message with intent
     userMessageRecord = await prisma.aiMessage.create({
       data: {
         conversationId: conversation.id,
@@ -496,7 +544,7 @@ export async function POST(request: Request) {
       content: entry.content,
     }));
 
-    // 4. Extract recent user messages for context (last 10)
+    // 5. Extract recent user messages for context (last 10)
     const recentUserMessages = history
       .filter((entry) => entry.role === "USER")
       .slice(-10)
@@ -506,7 +554,7 @@ export async function POST(request: Request) {
       `[AI-Chat] Including ${recentUserMessages.length} recent user messages in context`
     );
 
-    // 5. Build enhanced system prompt with user context, games, and conversation history
+    // 6. Build enhanced system prompt with user context, games, and conversation history
     const enhancedSystemPrompt = buildEnhancedSystemPrompt(
       {
         name: profile.name,
@@ -519,7 +567,7 @@ export async function POST(request: Request) {
       recentUserMessages
     );
 
-    // 6. Call LLM with enhanced context
+    // 7. Call LLM with enhanced context
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {

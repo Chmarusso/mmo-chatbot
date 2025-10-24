@@ -19,7 +19,8 @@ export type UserIntent =
   | "trending_games"
   | "game_info"
   | "category_browse"
-  | "general_chat";
+  | "general_chat"
+  | "off_topic";
 
 export interface IntentResult {
   intent: UserIntent;
@@ -48,7 +49,8 @@ Available intents:
 - trending_games: User wants to know what's popular/trending
 - game_info: User wants detailed information about a specific game
 - category_browse: User wants to browse games in a specific category
-- general_chat: General conversation (not directly about finding/comparing games)
+- general_chat: General conversation about gaming/MMOs (strategy, gameplay, builds, etc.)
+- off_topic: NOT related to gaming, MMOs, or game research (e.g., politics, cooking, math, general knowledge)
 
 Entity extraction:
 - gameNames: Extract exact game titles mentioned (e.g., "World of Warcraft", "FFXIV")
@@ -121,7 +123,33 @@ User: "What's the best raid rotation for a holy paladin?"
   "entities": {
     "keywords": ["raid", "holy paladin"]
   }
-}`.trim();
+}
+
+User: "What's the weather like today?"
+{
+  "intent": "off_topic",
+  "confidence": 0.98,
+  "reasoning": "Question about weather is not related to gaming or MMOs",
+  "entities": {}
+}
+
+User: "How do I make chocolate cake?"
+{
+  "intent": "off_topic",
+  "confidence": 0.99,
+  "reasoning": "Cooking question has no relation to games or gaming",
+  "entities": {}
+}
+
+User: "What is the capital of France?"
+{
+  "intent": "off_topic",
+  "confidence": 0.95,
+  "reasoning": "General knowledge question unrelated to gaming",
+  "entities": {}
+}
+
+IMPORTANT: Be strict about off_topic classification. Only classify as general_chat if the message is actually about gaming, game strategy, gameplay mechanics, or MMO-related topics. Questions about non-gaming topics should always be classified as off_topic.`.trim();
 
 /**
  * Classify user intent using AI
@@ -173,6 +201,7 @@ export async function classifyIntent(message: string): Promise<IntentResult> {
       "game_info",
       "category_browse",
       "general_chat",
+      "off_topic",
     ];
 
     if (!validIntents.includes(result.intent)) {
