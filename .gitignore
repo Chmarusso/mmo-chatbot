@@ -7,3 +7,4 @@ prisma/*.db
 playwright-report/
 test-results/
 backups/
+.claude/settings.local.json

@@ -1,35 +1,44 @@
 # MMOPLAYA
 
-MMOPLAYA is a mobile-first matchmaking experience for MMO players. It pairs adventurers using shared preferences, swipe-based discovery, and lightweight chat on top of Next.js 15, PostgreSQL, and Prisma.
+Find your perfect gaming squad through Tinder-style swiping that matches you with MMO players who share your favorite games, playstyles, and online schedules.
 
-## Features
-- Passwordless login flow that emails (or logs) six-digit OTP codes and magic links.
-- Guided profile builder with avatar uploads, MMO preference enums, social links, timezone hints, and locale-aware language defaults.
-- Multi-slot scheduling so players can advertise every window they're usually online.
-- Swipe deck that filters candidates by shared MMO and language, with instant toast on mutual matches.
-- Matches list and polling chat room so new messages appear without a page refresh.
-- Personal AI companion that helps plan raids, builds, and play schedules using LLM responses with intelligent intent detection.
-- Game embeddings for semantic search enabling similarity-based recommendations and natural language game discovery.
-- Invite-gated matches and companion experiences that unlock once a profile supplies a valid invite code.
-- Dark/light theme support with system default preference saved to user profile.
-- Games directory with individual game pages featuring screenshots, descriptions, official website links, star ratings, community comments, and player listings.
-- Community-powered game catalog updates: players can suggest new titles and metadata fixes, while admins review and accept changes.
-- LLM-backed moderation protects avatars and in-game comments from abusive or NSFW content.
-- Settings page with sign-out and full account deletion that cascades through matches, swipes, and messages.
-- Notification preferences for new matches, messages, and announcements.
-- Middleware-backed session guard that redirects unauthenticated users to the landing page.
-- Invite-only guilds that verified players can create with prepaid creation codes, share as one-hour QR invites, and manage via unique links.
-- Guild chat for intra-squad coordination, plus analytics that surface player summaries, guardian activity, badge hunts, and event attendance trends.
-- Shadowban moderation tools with automated LLM review of recent messages.
-- Kid accounts with guardian approvals, read-only chat oversight, and parent-managed matches/guild access.
-- Location-based badge hunts (GPS + QR codes) that reward players for visiting real-world hotspots.
-- In-app feedback portal so players can report bugs or suggest improvements directly from Settings.
-- Self-service data export that bundles your direct and guild messages.
-- Guild events with photos, online/offline locations, scheduling, and multi-channel alerts (email/SMS/Discord/Telegram).
-- Auto-generated OG preview cards for players, guilds, and events.
-- Admin user management dashboard with search, blocking, and account removal capabilities.
-- Disposable email blocking prevents temporary email addresses during registration and login.
-- Rich sample seed that provisions guardian/kid accounts, a starter guild, badges/events, and 100 randomized pilots (complete with DiceBear avatars) for instant matchmaking demos.
+**[Live Preview →](https://mmoplaya.net)**
+
+## Key Features
+
+### Smart Matchmaking
+- **Tinder-like swipe interface** - Discover compatible players through intuitive left/right swiping
+- **Intelligent filtering** - Automatically matches profiles based on shared games, gameplay styles (PvP, PvE, casual, hardcore), time zones, and preferred play times
+- **Multi-slot scheduling** - Set your weekly availability so you only see players who are online when you are
+- **Instant mutual matches** - Get notified immediately when someone swipes right on you too
+- **Direct messaging** - Chat with your matches to coordinate raids, dungeons, or casual sessions
+
+### Comprehensive Game Database
+- **300+ MMO titles** with screenshots, descriptions, official links, and community ratings
+- **Community-driven catalog** - Suggest new games or updates that admins review and approve
+- **Star ratings and reviews** - See what the community thinks before diving into a new game
+- **Active player counts** - Find out which games have the most active matchmakers
+
+### AI Game Discovery Chatbot
+- **RAG-powered recommendations** - Ask the AI companion to suggest games based on your preferences using semantic search over the entire game database
+- **Natural language queries** - "Find me games like World of Warcraft but more casual" or "What are trending MMOs for PvP players?"
+- **Intent detection** - Automatically understands whether you want similar games, comparisons, trending titles, or detailed game info
+- **Smart entity extraction** - Recognizes game names, categories, and playstyles in your messages
+
+### Community & Guilds
+- **Invite-only guilds** - Create or join private communities with verified players
+- **Guild chat and events** - Coordinate raids, schedule meetups, and stay connected with your squad
+- **QR code invites** - Share one-hour guild invite links via QR codes for easy onboarding
+- **Guardian controls** - Parent-managed kid accounts with chat oversight and match approvals
+
+### Additional Features
+- **Passwordless authentication** - Secure login via email OTP codes and magic links
+- **Profile customization** - Upload avatars, link social accounts, set timezone and language preferences
+- **Location-based badges** - Collect badges by visiting gaming hotspots (GPS + QR codes)
+- **Data export** - Download all your chat history and profile data anytime
+- **AI moderation** - LLM-powered content screening protects against spam, abuse, and NSFW content
+- **Dark mode** - Easy on the eyes during late-night gaming sessions
+- **Full account control** - Sign out or permanently delete your account with cascade deletion of all data
 
 ## Tech Stack
 - Next.js 15 App Router • React 19 Server/Client Components
