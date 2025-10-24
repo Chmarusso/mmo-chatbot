@@ -211,7 +211,7 @@ export async function PUT(request: Request) {
         };
 
         if ((inviteToClaim.maxUses ?? 1) <= 1) {
-          inviteUpdateData.claimedByProfileId = existing.id;
+          inviteUpdateData.claimedBy = { connect: { id: existing.id } };
         }
 
         await tx.inviteCode.update({
