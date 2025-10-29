@@ -105,7 +105,7 @@ if command -v pnpm >/dev/null 2>&1; then
   BUILD_CMD="pnpm build"
 elif command -v npm >/dev/null 2>&1; then
   PACKAGE_MANAGER="npm"
-  INSTALL_CMD="npm ci --omit=dev"
+  INSTALL_CMD="npm ci"
   BUILD_CMD="npm run build"
 else
   echo "Error: Neither pnpm nor npm is available on the remote host."
