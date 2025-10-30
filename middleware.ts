@@ -35,6 +35,13 @@ export default function middleware(req: NextRequest) {
   }
 
   if (hasSession && pathname === "/auth/login") {
+    // If there's an 'expired' parameter, allow access to login page
+    // This handles the case where the session cookie exists but is invalid in the DB
+    const hasExpiredParam = req.nextUrl.searchParams.has("expired");
+    if (hasExpiredParam) {
+      return NextResponse.next();
+    }
+
     const fallbackPath = "/dashboard";
     const redirectParam = req.nextUrl.searchParams.get("redirect");
     let targetPath = fallbackPath;

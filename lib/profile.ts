@@ -1,10 +1,11 @@
 import type { Profile as PrismaProfile, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/session";
+import { getCurrentUser, destroySession } from "@/lib/session";
 import type { Profile } from "@/types/profile";
 import { checkDailyLogin } from "@/lib/exp";
 import { completeReferral } from "@/lib/referral";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const serializeProfile = (profile: PrismaProfile, user: User): Profile => ({
   id: profile.id,
@@ -44,7 +45,8 @@ export async function getOrCreateProfile(): Promise<Profile> {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error("User session not found");
+    // Redirect to login with expired param to bypass middleware redirect
+    redirect("/auth/login?expired=1");
   }
 
   const existingProfile = await prisma.profile.findUnique({
