@@ -21,8 +21,6 @@ import { PreferenceOption, PLAYSTYLES, TIME_SLOTS } from "@/types/profile";
 import { GameRecommendationCard } from "@/components/GameRecommendationCard";
 import { useGameOptions } from "@/lib/hooks/useGameOptions";
 
-const FETCH_INTERVAL_MS = 45_000;
-
 const makeMessageId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -64,24 +62,43 @@ interface CompanionOnboardingProps {
   onComplete: (snapshot: AiCompanionProfileSnapshot) => void;
 }
 
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+  data?: {
+    recommendedGames?: Array<{
+      value: string;
+      label: string;
+      description: string | null;
+      screenshot: string | null;
+      website: string | null;
+      category: { value: string; label: string } | null;
+      similarity?: number;
+    }>;
+  };
+}
+
 export function AiCompanion() {
-  const [messages, setMessages] = useState<AiMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [profileSnapshot, setProfileSnapshot] = useState<AiCompanionProfileSnapshot | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const { data: gameOptions } = useGameOptions();
 
   const needsOnboarding =
-    !isLoading &&
+    !isLoadingProfile &&
     profileSnapshot !== null &&
     (!profileSnapshot.gamePref || !profileSnapshot.playstyle || (profileSnapshot.timeSlots?.length ?? 0) === 0);
 
+  // Load initial messages and profile on mount
   useEffect(() => {
     let interrupted = false;
 
-    const loadMessages = async () => {
+    const loadInitialData = async () => {
       try {
         const response = await fetch("/api/ai-chat");
         if (!response.ok) {
@@ -91,29 +108,18 @@ export function AiCompanion() {
           messages: AiMessage[];
           profile: AiCompanionProfileSnapshot;
         };
+
         if (!interrupted) {
-          // Preserve recommendedGames from existing messages when polling
-          setMessages((prev) => {
-            const incomingMessages = payload.messages ?? [];
+          // Convert old message format to new format
+          const convertedMessages: Message[] = (payload.messages ?? []).map((msg: AiMessage) => ({
+            id: msg.id,
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+            createdAt: msg.createdAt,
+            data: msg.recommendedGames ? { recommendedGames: msg.recommendedGames } : undefined,
+          }));
 
-            // Create a map of existing messages with their client-side data
-            const existingMap = new Map(
-              prev.map((msg) => [msg.id, msg])
-            );
-
-            // Merge incoming messages with existing client-side data
-            return incomingMessages.map((msg) => {
-              const existing = existingMap.get(msg.id);
-              // If message exists, preserve recommendedGames
-              if (existing?.recommendedGames) {
-                return {
-                  ...msg,
-                  recommendedGames: existing.recommendedGames,
-                };
-              }
-              return msg;
-            });
-          });
+          setMessages(convertedMessages);
           setProfileSnapshot(payload.profile ?? null);
         }
       } catch (error) {
@@ -123,19 +129,19 @@ export function AiCompanion() {
         }
       } finally {
         if (!interrupted) {
-          setIsLoading(false);
+          setIsLoadingProfile(false);
         }
       }
     };
 
-    loadMessages();
-    const interval = window.setInterval(loadMessages, FETCH_INTERVAL_MS);
+    loadInitialData();
+
     return () => {
       interrupted = true;
-      window.clearInterval(interval);
     };
   }, []);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -150,6 +156,8 @@ export function AiCompanion() {
       timeSlots: dedupedTimeSlots,
       timeSlot: dedupedTimeSlots[0] ?? snapshot.timeSlot,
     });
+
+    // Add welcome message after onboarding
     setMessages((prev) => [
       ...prev,
       {
@@ -160,32 +168,45 @@ export function AiCompanion() {
         createdAt: new Date().toISOString(),
       },
     ]);
+
     toast.success("Profile basics saved! Your companion is ready.");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSending || needsOnboarding) {
-      if (needsOnboarding) {
-        toast.error("Finish the onboarding checklist before chatting with the companion.");
-      }
+
+    if (needsOnboarding) {
+      toast.error("Finish the onboarding checklist before chatting with the companion.");
       return;
     }
+
     const trimmed = input.trim();
     if (!trimmed) return;
 
     setIsSending(true);
 
-    // Optimistically add user's message and a temporary thinking indicator
-    const userTempId = makeMessageId();
-    const thinkingTempId = makeMessageId();
-    const nowIso = new Date().toISOString();
-    setMessages((prev) => [
-      ...prev,
-      { id: userTempId, role: "user", content: trimmed, createdAt: nowIso },
-      { id: thinkingTempId, role: "assistant", content: "Thinking…", createdAt: nowIso, isThinking: true },
-    ]);
+    // Add user message
+    const userMessageId = makeMessageId();
+    const userMessage: Message = {
+      id: userMessageId,
+      role: "user",
+      content: trimmed,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+
+    // Add placeholder for assistant response
+    const assistantMessageId = makeMessageId();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: "assistant",
+      content: "",
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
 
     try {
       const response = await fetch("/api/ai-chat", {
@@ -193,80 +214,104 @@ export function AiCompanion() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+        }),
       });
 
-      const data = (await response.json().catch(() => ({}))) as
-        | {
-            messages: AiMessage[];
-            profile?: AiCompanionProfileSnapshot;
-            relevantGames?: Array<{
-              value: string;
-              label: string;
-              description: string | null;
-              screenshot: string | null;
-              website: string | null;
-              category: { value: string; label: string } | null;
-              similarity: number;
-            }>;
-          }
-        | { error: string };
-
-      if (!response.ok || !("messages" in data)) {
-        throw new Error("error" in data ? data.error : "Companion is unavailable right now.");
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to get response from companion.");
       }
 
-      // Replace the optimistic messages with the real server response
-      // Attach relevant games to the assistant message
-      console.log("[AiCompanion] Received relevantGames:", data.relevantGames);
+      // Read UI message stream response (SSE format with tool support)
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      setMessages((prev) => {
-        // Remove both the optimistic user message and thinking indicator
-        const withoutOptimistic = prev.filter(
-          (m) => m.id !== userTempId && m.id !== thinkingTempId
-        );
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        // Get all messages from the server response
-        const serverMessages = data.messages;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
 
-        // Find the assistant message and attach games if present
-        const messagesWithGames = serverMessages.map((msg) => {
-          if (
-            msg.role === "assistant" &&
-            data.relevantGames &&
-            data.relevantGames.length > 0
-          ) {
-            console.log(`[AiCompanion] Attaching ${data.relevantGames.length} games to assistant message`);
-            return {
-              ...msg,
-              recommendedGames: data.relevantGames,
-            };
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          // Skip SSE comments
+          if (line.startsWith(":")) continue;
+
+          // Parse SSE data lines
+          if (line.startsWith("data:")) {
+            const dataStr = line.slice(5).trim(); // Remove "data:" prefix
+
+            // Check for stream termination
+            if (dataStr === "[DONE]") {
+              console.log("[AiCompanion] Stream marked as done");
+              continue;
+            }
+
+            try {
+              const data = JSON.parse(dataStr);
+
+              // Handle text deltas
+              if (data.type === "text-delta") {
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: msg.content + (data.delta || "") }
+                      : msg
+                  )
+                );
+              }
+              // We could handle tool calls here in the future if needed
+            } catch (e) {
+              console.warn("[AiCompanion] Failed to parse SSE data:", dataStr);
+            }
           }
-          return msg;
-        });
-
-        if (!data.relevantGames || data.relevantGames.length === 0) {
-          console.log("[AiCompanion] No games to attach:", {
-            hasGames: !!data.relevantGames,
-            gamesLength: data.relevantGames?.length,
-          });
         }
+      }
 
-        // Preserve all previous messages (with their game cards) and add new ones
-        return [...withoutOptimistic, ...messagesWithGames];
-      });
-      if (data.profile) {
-        setProfileSnapshot(data.profile);
+      console.log("[AiCompanion] Streaming complete");
+
+      // Reload messages from server to get toolResults and game recommendations
+      try {
+        const reloadResponse = await fetch("/api/ai-chat");
+        if (reloadResponse.ok) {
+          const payload = (await reloadResponse.json()) as {
+            messages: AiMessage[];
+            profile: AiCompanionProfileSnapshot;
+          };
+
+          const convertedMessages: Message[] = (payload.messages ?? []).map((msg: AiMessage) => ({
+            id: msg.id,
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+            createdAt: msg.createdAt,
+            data: msg.recommendedGames ? { recommendedGames: msg.recommendedGames } : undefined,
+          }));
+
+          setMessages(convertedMessages);
+          console.log("[AiCompanion] Messages reloaded with game recommendations");
+        }
+      } catch (reloadError) {
+        console.warn("[AiCompanion] Failed to reload messages:", reloadError);
       }
     } catch (error) {
-      console.error(error);
-      // On error, remove thinking indicator and show an error message from the assistant
-      setMessages((prev) =>
-        prev
-          .filter((m) => m.id !== thinkingTempId)
-          .map((m) => m)
+      console.error("[AiCompanion] Error:", error);
+
+      // Remove the empty assistant message on error
+      setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+
+      toast.error(
+        error instanceof Error ? error.message : "Failed to chat with companion."
       );
-      toast.error(error instanceof Error ? error.message : "Failed to chat with companion.");
     } finally {
       setIsSending(false);
     }
@@ -316,52 +361,63 @@ export function AiCompanion() {
       </ChatHeader>
       <ChatMessages ref={scrollRef}>
         <div className="flex h-full flex-col gap-4">
-          {isLoading && (
+          {isLoadingProfile && (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin text-accent-cyan" />
               Loading chat history…
             </div>
           )}
 
-          {!isLoading && !needsOnboarding && messages.length === 0 && (
+          {!isLoadingProfile && !needsOnboarding && messages.length === 0 && (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-accent-cyan/30 bg-background/50 p-6 text-center text-sm text-muted-foreground">
               <MessageSquareText className="h-6 w-6 text-accent-cyan" />
               <p>Your companion is ready. Ask about optimal raid rotations or request a warm-up quest.</p>
             </div>
           )}
 
-          {messages.map((msg) => (
-            <ChatBubble key={msg.id} variant={msg.role === "user" ? "sent" : "received"}>
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col">
-                  <ChatBubbleMessage variant={msg.role === "user" ? "sent" : "received"}>
-                    <p className="whitespace-pre-wrap text-lg leading-relaxed">
-                      {msg.isThinking ? (
-                        <span className="inline-flex items-center gap-2 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin text-accent-cyan" />
-                          Thinking…
-                        </span>
-                      ) : (
-                        msg.content
-                      )}
-                    </p>
-                  </ChatBubbleMessage>
-                  <ChatBubbleTimestamp>
-                    {msg.role === "user" ? "You" : "Companion"} · {formatRelativeTime(msg.createdAt)}
-                  </ChatBubbleTimestamp>
-                </div>
+          {messages.map((msg, index) => {
+            const isStreaming = index === messages.length - 1 && isSending && msg.role === "assistant";
+            const recommendedGames = msg.data?.recommendedGames;
 
-                {/* Render game recommendation cards if present */}
-                {msg.recommendedGames && msg.recommendedGames.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    {msg.recommendedGames.map((game) => (
-                      <GameRecommendationCard key={game.value} game={game} />
-                    ))}
+            return (
+              <ChatBubble key={msg.id} variant={msg.role === "user" ? "sent" : "received"}>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col">
+                    <ChatBubbleMessage variant={msg.role === "user" ? "sent" : "received"}>
+                      <p className="whitespace-pre-wrap text-lg leading-relaxed">
+                        {isStreaming && !msg.content ? (
+                          <span className="inline-flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin text-accent-cyan" />
+                            Thinking…
+                          </span>
+                        ) : (
+                          <>
+                            {msg.content}
+                            {isStreaming && (
+                              <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-accent-cyan" />
+                            )}
+                          </>
+                        )}
+                      </p>
+                    </ChatBubbleMessage>
+                    <ChatBubbleTimestamp>
+                      {msg.role === "user" ? "You" : "Companion"} ·{" "}
+                      {formatRelativeTime(msg.createdAt)}
+                    </ChatBubbleTimestamp>
                   </div>
-                )}
-              </div>
-            </ChatBubble>
-          ))}
+
+                  {/* Render game recommendation cards if present */}
+                  {recommendedGames && recommendedGames.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      {recommendedGames.map((game) => (
+                        <GameRecommendationCard key={game.value} game={game} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </ChatBubble>
+            );
+          })}
 
           {needsOnboarding && (
             <ChatBubble variant="received">
@@ -402,7 +458,7 @@ export function AiCompanion() {
         >
           <Textarea
             value={input}
-            onChange={(event) => setInput(event.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask for build advice, raid strats, or squad icebreakers…"
             rows={3}

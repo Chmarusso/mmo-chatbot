@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import { Badge } from "@/components/ui/badge";
 import type { GameRecommendation } from "@/types/ai";
 
@@ -10,6 +10,7 @@ interface GameRecommendationCardProps {
 export function GameRecommendationCard({ game }: GameRecommendationCardProps) {
   // Convert game.value (with underscores) to permalink format (with hyphens)
   const permalink = game.value.replace(/_/g, "-");
+  const fallbackSrc = "/mmoplaya-logo.png"; // local public asset
 
   return (
     <Link
@@ -18,19 +19,14 @@ export function GameRecommendationCard({ game }: GameRecommendationCardProps) {
     >
       {/* Screenshot */}
       <div className="relative h-32 w-full flex-shrink-0 overflow-hidden bg-background/50 sm:h-auto sm:w-32">
-        {game.screenshot ? (
-          <Image
-            src={game.screenshot}
-            alt={game.label}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, 128px"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-            No image
-          </div>
-        )}
+        <SafeImage
+          src={game.screenshot}
+          alt={game.label}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 640px) 100vw, 128px"
+          fallbackSrc={fallbackSrc}
+        />
       </div>
 
       {/* Content */}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
@@ -58,17 +58,15 @@ export default async function GamesPage() {
         {games.map((game) => (
           <article key={game.value} className="flex h-full flex-col overflow-hidden rounded-[0.4em] border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
             <Link href={`/games/${game.value.replace(/_/g, '-')}`} className="flex flex-col flex-1">
-              {game.screenshot && (
-                <div className="relative h-40 w-full">
-                  <Image
-                    src={game.screenshot}
-                    alt={game.label}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                </div>
-              )}
+              <div className="relative h-40 w-full">
+                <SafeImage
+                  src={game.screenshot}
+                  alt={game.label}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                />
+              </div>
               <div className="flex flex-1 flex-col p-4">
                 <h2 className="text-lg font-semibold text-white mb-2">{game.label}</h2>
                 {game.category && (

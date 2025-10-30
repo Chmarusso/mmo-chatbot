@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -131,17 +131,15 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           {category.games.map((game) => (
             <Link key={game.value} href={`/games/${game.value.replace(/_/g, '-')}`}>
               <article className="flex h-full flex-col overflow-hidden rounded-[0.4em] border border-accent-purple/20 bg-surface/80 transition hover:border-accent-purple/40">
-                {game.screenshot && (
-                  <div className="relative h-40 w-full">
-                    <Image
-                      src={game.screenshot}
-                      alt={game.label}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    />
-                  </div>
-                )}
+                <div className="relative h-40 w-full">
+                  <SafeImage
+                    src={game.screenshot}
+                    alt={game.label}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h2 className="text-lg font-semibold text-white">{game.label}</h2>
                 </div>

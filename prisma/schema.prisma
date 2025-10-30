@@ -544,10 +544,14 @@ model AiMessage {
   role            AiMessageRole
   content         String        @db.Text
 
-  // Intent detection fields (only for USER messages)
+  // Legacy intent detection fields (deprecated - kept for backward compatibility)
   intent          String?       @db.VarChar(64)
   intentConfidence Float?
   intentEntities  Json?
+
+  // AI SDK tool calling fields (new approach)
+  toolCalls       Json?         // Array of tool invocations from AI SDK
+  toolResults     Json?         // Array of tool execution results
 
   createdAt       DateTime      @default(now())
 
