@@ -23,9 +23,7 @@ test('user with deleted session cannot access protected pages', async ({ page, c
       const normalizedEmail = normalizeEmail(email);
       await prisma.otpToken.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
       await prisma.user.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
-    } catch (error) {
-      console.log('Cleanup error (non-fatal):', error);
-    }
+    } catch (error) {}
   };
 
   await cleanup();
@@ -50,7 +48,7 @@ test('user with deleted session cannot access protected pages', async ({ page, c
       include: { profile: true },
     });
 
-    console.log(`✅ Created test user: ${user.id}`);
+    
 
     // 2. Create OTP and login
     await createOtp(email, otp);
@@ -65,18 +63,18 @@ test('user with deleted session cannot access protected pages', async ({ page, c
     await page.click('button:has-text("Verify code")');
     await page.waitForURL(/\/dashboard/, { timeout: 10000 });
 
-    console.log('✅ User logged in successfully');
+    
 
     // 3. Verify user can access protected pages
     await page.goto(`${APP_URL}/profile`);
     await expect(page.getByText(name)).toBeVisible({ timeout: 5000 });
-    console.log('✅ User can access profile page');
+    
 
     // 4. Get the session cookie value
     const cookies = await context.cookies();
     const sessionCookie = cookies.find(c => c.name === SESSION_COOKIE_NAME);
     expect(sessionCookie).toBeDefined();
-    console.log(`✅ Session cookie found: ${sessionCookie?.value.substring(0, 10)}...`);
+    
 
     // 5. Verify session exists in database
     let sessionInDb = await prisma.session.findUnique({
@@ -85,27 +83,27 @@ test('user with deleted session cannot access protected pages', async ({ page, c
     });
     expect(sessionInDb).not.toBeNull();
     expect(sessionInDb?.userId).toBe(user.id);
-    console.log('✅ Session exists in database');
+    
 
     // 6. Delete session from database (simulate session invalidation)
     await prisma.session.deleteMany({
       where: { userId: user.id },
     });
-    console.log('🗑️  Session deleted from database');
+    
 
     // 7. Verify session is gone from database
     sessionInDb = await prisma.session.findUnique({
       where: { token: sessionCookie!.value },
     });
     expect(sessionInDb).toBeNull();
-    console.log('✅ Confirmed session no longer exists in database');
+    
 
     // 8. Cookie still exists in browser
     const cookiesAfterDeletion = await context.cookies();
     const sessionCookieAfterDeletion = cookiesAfterDeletion.find(c => c.name === SESSION_COOKIE_NAME);
     expect(sessionCookieAfterDeletion).toBeDefined();
     expect(sessionCookieAfterDeletion?.value).toBe(sessionCookie?.value);
-    console.log('✅ Session cookie still exists in browser');
+    
 
     // 9. Try to navigate to protected pages
     // The middleware passes (cookie exists) but getCurrentUser() returns null
@@ -116,28 +114,25 @@ test('user with deleted session cannot access protected pages', async ({ page, c
     await page.waitForURL(/\/auth\/login/, { timeout: 5000 });
 
     const currentUrl = page.url();
-    console.log(`📍 Current URL after navigation: ${currentUrl}`);
 
     // Should be redirected to login page with expired parameter
     expect(currentUrl).toContain('/auth/login');
     expect(currentUrl).toContain('expired=1');
-    console.log('✅ User redirected to login page with expired session indicator');
+    
 
     // 10. Try accessing API endpoints with invalid session
     const response = await page.request.get(`${APP_URL}/api/profile`);
-    console.log(`🔍 API /api/profile response status: ${response.status()}`);
 
     // Should return 401 Unauthorized or redirect
     if (response.status() === 401) {
-      console.log('✅ API correctly returns 401 for invalid session');
+      
     } else if (response.status() === 302 || response.status() === 307) {
-      console.log('✅ API correctly redirects for invalid session');
+      
     } else {
-      console.log(`⚠️  Unexpected API response status: ${response.status()}`);
+      
     }
 
-    console.log('\n✅ Session invalidation test completed successfully!');
-    console.log('✅ User with deleted session is redirected to login');
+    
 
   } finally {
     await cleanup();
@@ -156,9 +151,7 @@ test('user can log back in after session is invalidated', async ({ page, context
       const normalizedEmail = normalizeEmail(email);
       await prisma.otpToken.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
       await prisma.user.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
-    } catch (error) {
-      console.log('Cleanup error (non-fatal):', error);
-    }
+    } catch (error) {}
   };
 
   await cleanup();
@@ -193,7 +186,6 @@ test('user can log back in after session is invalidated', async ({ page, context
     await page.fill('input#otp', otp);
     await page.click('button:has-text("Verify code")');
     await page.waitForURL(/\/dashboard/, { timeout: 10000 });
-    console.log('✅ First login successful');
 
     // Get session cookie
     const cookies = await context.cookies();
@@ -202,18 +194,15 @@ test('user can log back in after session is invalidated', async ({ page, context
 
     // Delete session from database
     await prisma.session.deleteMany({ where: { userId: user.id } });
-    console.log('🗑️  Session deleted from database');
 
     // Try to access protected page - this will show an error due to invalid session
     await page.goto(`${APP_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
     const urlAfterInvalidation = page.url();
-    console.log(`📍 URL after accessing dashboard with invalid session: ${urlAfterInvalidation}`);
 
     // Clear the invalid session cookie before logging in again
     await context.clearCookies();
-    console.log('🗑️  Cleared invalid session cookie from browser');
 
     // Now navigate to login page to login again
     await page.goto(`${APP_URL}/auth/login`);
@@ -230,8 +219,6 @@ test('user can log back in after session is invalidated', async ({ page, context
     await page.click('button:has-text("Verify code")');
     await page.waitForURL(/\/dashboard/, { timeout: 10000 });
 
-    console.log('✅ Second login successful after session invalidation');
-
     // Verify new session exists in database
     const newCookies = await context.cookies();
     const newSessionCookie = newCookies.find(c => c.name === SESSION_COOKIE_NAME);
@@ -243,12 +230,10 @@ test('user can log back in after session is invalidated', async ({ page, context
     });
     expect(newSession).not.toBeNull();
     expect(newSession?.userId).toBe(user.id);
-    console.log('✅ New session created in database');
 
     // Verify user can access protected pages with new session
     await page.goto(`${APP_URL}/profile`);
     await expect(page.getByText(name)).toBeVisible({ timeout: 5000 });
-    console.log('✅ User can access protected pages with new session');
 
   } finally {
     await cleanup();

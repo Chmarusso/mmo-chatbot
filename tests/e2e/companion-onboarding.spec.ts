@@ -23,9 +23,7 @@ test('user can complete companion chat onboarding with invite code', async ({ pa
       // Delete user and let cascade take care of everything else
       await prisma.otpToken.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
       await prisma.user.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
-    } catch (error) {
-      console.log('Cleanup error (non-fatal):', error);
-    }
+    } catch (error) {}
   };
 
   await cleanup();
@@ -161,9 +159,7 @@ test('companion stores tool results when recommending games', async ({ page }) =
       }).catch(() => {});
       await prisma.otpToken.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
       await prisma.user.deleteMany({ where: { email: normalizedEmail } }).catch(() => {});
-    } catch (error) {
-      console.log('Cleanup error (non-fatal):', error);
-    }
+    } catch (error) {}
   };
 
   await cleanup();
@@ -231,43 +227,26 @@ test('companion stores tool results when recommending games', async ({ page }) =
 
     const assistantMessage = conversation!.messages[0];
 
-    // Log the assistant message for debugging
-    console.log('Assistant Message:', {
-      id: assistantMessage.id,
-      content: assistantMessage.content.substring(0, 100),
-      toolResults: assistantMessage.toolResults,
-      toolCalls: assistantMessage.toolCalls,
-    });
+    // debug logs removed
 
     // Verify toolResults are stored
     const toolResults = assistantMessage.toolResults as any;
     const toolCalls = assistantMessage.toolCalls as any;
 
     if (!toolResults || !Array.isArray(toolResults) || toolResults.length === 0) {
-      console.log('⚠️  No tool results found. This might mean:');
-      console.log('   1. AI didnt think it needed to call tools');
-      console.log('   2. Streaming finished before onFinish callback');
-      console.log('   3. Tools failed to execute');
-      console.log('   Message content:', assistantMessage.content);
-      console.log('   toolResults value:', toolResults);
-      console.log('   toolCalls value:', toolCalls);
-
       // Don't fail the test if AI chose not to use tools - that's valid behavior
-      console.log('✅ Test passed - message was stored (AI chose not to use tools for this query)');
       return;
     }
-
-    console.log('Tool Results:', JSON.stringify(toolResults, null, 2));
 
     expect(Array.isArray(toolResults)).toBe(true);
     expect(toolResults.length).toBeGreaterThan(0);
 
-    // Verify tool result structure
+    // Verify tool result structure (Vercel AI SDK stores payload under `output`)
     const firstResult = toolResults[0];
-    expect(firstResult).toHaveProperty('result');
-    expect(firstResult.result).toHaveProperty('games');
+    expect(firstResult).toHaveProperty('output');
+    expect(firstResult.output).toHaveProperty('games');
 
-    const games = firstResult.result.games;
+    const games = firstResult.output.games;
     expect(Array.isArray(games)).toBe(true);
     expect(games.length).toBeGreaterThan(0);
 
@@ -277,10 +256,6 @@ test('companion stores tool results when recommending games', async ({ page }) =
     expect(firstGame).toHaveProperty('label');
     expect(firstGame).toHaveProperty('similarity');
 
-    console.log(`✅ Tool calling test passed!`);
-    console.log(`✅ Found ${games.length} games in tool results`);
-    console.log(`✅ First game: ${firstGame.label} (${(firstGame.similarity * 100).toFixed(1)}% match)`);
-
     // Verify toolCalls are also stored
     expect(toolCalls).not.toBeNull();
     expect(Array.isArray(toolCalls)).toBe(true);
@@ -288,7 +263,7 @@ test('companion stores tool results when recommending games', async ({ page }) =
 
     const firstCall = toolCalls[0];
     expect(firstCall).toHaveProperty('toolName');
-    console.log(`✅ Tool called: ${firstCall.toolName}`);
+    // debug logs removed
 
   } finally {
     await cleanup();
