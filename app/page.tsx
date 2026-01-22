@@ -204,8 +204,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10">
-                <Globe size={24} className="text-accent-purple" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10 mx-auto lg:h-16 lg:w-16">
+                <Globe className="text-accent-purple w-8 h-8 lg:w-16 lg:h-16" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Multi-Language Support</h3>
               <p className="text-sm text-text-secondary">
@@ -214,8 +214,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10">
-                <Clock size={24} className="text-accent-cyan" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10 mx-auto lg:h-16 lg:w-16">
+                <Clock className="text-accent-cyan w-8 h-8 lg:w-16 lg:h-16" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Time Zone Matching</h3>
               <p className="text-sm text-text-secondary">
@@ -224,8 +224,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10">
-                <Swords size={24} className="text-accent-purple" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10 mx-auto lg:h-16 lg:w-16">
+                <Swords className="text-accent-purple w-8 h-8 lg:w-16 lg:h-16" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Playstyle Filters</h3>
               <p className="text-sm text-text-secondary">
@@ -234,8 +234,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10">
-                <Shield size={24} className="text-accent-cyan" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10 mx-auto lg:h-16 lg:w-16">
+                <Shield className="text-accent-cyan w-8 h-8 lg:w-16 lg:h-16" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">No Tracking</h3>
               <p className="text-sm text-text-secondary">
@@ -244,8 +244,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10">
-                <Users size={24} className="text-accent-purple" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-purple/10 mx-auto lg:h-16 lg:w-16">
+                <Users className="text-accent-purple w-8 h-8 lg:w-16 lg:h-16" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Guilds & Events</h3>
               <p className="text-sm text-text-secondary">
@@ -254,8 +254,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-surface/30 p-6">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10">
-                <Gift size={24} className="text-accent-cyan" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-cyan/10 mx-auto lg:h-16 lg:w-16">
+                <Gift className="text-accent-cyan w-8 h-8 lg:w-16 lg:h-16" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">Referral Rewards</h3>
               <p className="text-sm text-text-secondary">
