@@ -1,96 +1,117 @@
-import { createClient } from "@supabase/supabase-js";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const R2_ENDPOINT = process.env.R2_ENDPOINT!;
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
+const R2_BUCKET = process.env.R2_BUCKET!;
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL!;
+const R2_PATH_PREFIX = process.env.R2_PATH_PREFIX || "mmoplaya";
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error("Missing Supabase environment variables");
+if (!R2_ENDPOINT || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET || !R2_PUBLIC_URL) {
+  throw new Error("Missing R2 environment variables");
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
+const s3 = new S3Client({
+  endpoint: R2_ENDPOINT,
+  region: "auto",
+  credentials: {
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
   },
 });
-
-const BUCKET_NAME = "mmoplaya";
 
 export type UploadCategory = "avatars" | "game-screenshots";
 
 /**
- * Upload a file to Supabase storage
+ * Upload a file to Cloudflare R2
  * @param file - File buffer or Blob
  * @param category - Upload category (avatars or game-screenshots)
  * @param filename - Filename to use
  * @returns Public URL of uploaded file
  */
-export async function uploadToSupabase(
+export async function uploadToR2(
   file: Buffer | Blob,
   category: UploadCategory,
   filename: string
 ): Promise<string> {
-  const filePath = `${category}/${filename}`;
+  const key = `${R2_PATH_PREFIX}/${category}/${filename}`;
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(filePath, file, {
-      contentType: file instanceof Blob ? file.type : "image/jpeg",
-      upsert: true, // Overwrite if exists
-    });
+  let body: Buffer;
+  let contentType = "image/jpeg";
 
-  if (error) {
-    console.error("Supabase upload error:", error);
-    throw new Error(`Failed to upload file: ${error.message}`);
+  if (file instanceof Blob) {
+    const arrayBuffer = await file.arrayBuffer();
+    body = Buffer.from(arrayBuffer);
+    contentType = file.type || "image/jpeg";
+  } else {
+    body = file;
   }
 
-  // Get public URL
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
 
-  return publicUrl;
+  return `${R2_PUBLIC_URL}/${key}`;
 }
 
 /**
- * Delete a file from Supabase storage
+ * Delete a file from Cloudflare R2
  * @param url - Full public URL or file path
  * @param category - Upload category (avatars or game-screenshots)
  */
-export async function deleteFromSupabase(
+export async function deleteFromR2(
   url: string,
   category: UploadCategory
 ): Promise<void> {
-  // Extract filename from URL
-  const urlParts = url.split("/");
-  const filename = urlParts[urlParts.length - 1];
+  let key: string;
 
-  if (!filename) {
-    console.warn("Could not extract filename from URL:", url);
-    return;
+  if (url.startsWith(R2_PUBLIC_URL)) {
+    // R2 URL — extract key from URL
+    key = url.replace(`${R2_PUBLIC_URL}/`, "");
+  } else {
+    // External URL — extract filename and build R2 key
+    const urlParts = url.split("/");
+    const filename = urlParts[urlParts.length - 1];
+    if (!filename) {
+      console.warn("Could not extract filename from URL:", url);
+      return;
+    }
+    key = `${R2_PATH_PREFIX}/${category}/${filename}`;
   }
 
-  const filePath = `${category}/${filename}`;
-
-  const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
-
-  if (error) {
-    console.error("Supabase delete error:", error);
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: key,
+      })
+    );
+  } catch (error) {
+    console.error("R2 delete error:", error);
     // Don't throw - deletion failures shouldn't break the app
   }
 }
 
 /**
- * Download a file from URL to temp folder, validate it, and upload to Supabase
+ * Download a file from URL to temp folder, validate it, and upload to R2
  * @param imageUrl - URL of image to download
  * @param category - Upload category (avatars or game-screenshots)
  * @param filename - Filename to use
  * @returns Public URL of uploaded file
  */
-export async function downloadAndUploadToSupabase(
+export async function downloadAndUploadToR2(
   imageUrl: string,
   category: UploadCategory,
   filename: string
@@ -145,9 +166,9 @@ export async function downloadAndUploadToSupabase(
       throw new Error(`File write verification failed: expected ${buffer.length}, got ${stats.size}`);
     }
 
-    // Step 4: Read back from temp file and upload to Supabase
+    // Step 4: Read back from temp file and upload to R2
     const fileBuffer = fs.readFileSync(tempFilePath);
-    const uploadResult = await uploadToSupabase(fileBuffer, category, filename);
+    const uploadResult = await uploadToR2(fileBuffer, category, filename);
 
     // Step 5: Clean up temp file
     try {

@@ -62,7 +62,7 @@ This will:
 1. **Check if game exists** (if `--skip-existing` flag is used)
 2. **Run add-game-agent.ts** for each game
 3. **Download gameplay images** from Google Image Search
-4. **Validate and upload** to Supabase with fallback logic
+4. **Validate and upload** to Cloudflare R2 with fallback logic
 5. **Wait 5 seconds** before processing next game
 6. **Log results** and generate summary report
 

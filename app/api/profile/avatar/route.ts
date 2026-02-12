@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateProfile } from "@/lib/profile";
-import { uploadToSupabase, deleteFromSupabase } from "@/lib/supabase-storage";
+import { uploadToR2, deleteFromR2 } from "@/lib/r2-storage";
 import { isImageSafe } from "@/lib/nsfw";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
@@ -42,12 +42,12 @@ export async function POST(request: Request) {
   const filename = `${profile.id}-${Date.now()}.${ext}`;
 
   try {
-    // Upload to Supabase
-    const publicUrl = await uploadToSupabase(buffer, "avatars", filename);
+    // Upload to R2
+    const publicUrl = await uploadToR2(buffer, "avatars", filename);
 
-    // Delete old avatar from Supabase if it exists and is a Supabase URL
-    if (profile.avatarUrl && profile.avatarUrl.includes("supabase.co")) {
-      await deleteFromSupabase(profile.avatarUrl, "avatars").catch((err) => {
+    // Delete old avatar from storage if it exists and is a managed URL
+    if (profile.avatarUrl && profile.avatarUrl.startsWith(process.env.R2_PUBLIC_URL!)) {
+      await deleteFromR2(profile.avatarUrl, "avatars").catch((err) => {
         console.error("Failed to delete old avatar:", err);
       });
     }

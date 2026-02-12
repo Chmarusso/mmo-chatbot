@@ -219,7 +219,7 @@ Game embeddings enable intelligent game discovery beyond keyword matching:
 **Note**: The pgvector extension is required for full embedding functionality. Without it, the system will store metadata fields but not perform semantic searches.
 
 ### Moderation Pipelines
-- **Avatar uploads** are scanned with OpenAI's `omni-moderation-latest` before storing in Supabase.
+- **Avatar uploads** are scanned with OpenAI's `omni-moderation-latest` before storing in Cloudflare R2.
 - **Game comments** are screened through OpenRouter (default `mistralai/mistral-7b-instruct`) to block spam, abuse, or explicit content.
 - **Community suggestions** (new games and metadata updates) route through `/admin/game-suggestions` and `/admin/game-update-suggestions` where admins can accept, reject, or annotate submissions. Accepted game edits apply immediately to the catalog.
 

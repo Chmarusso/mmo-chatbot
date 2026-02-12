@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { downloadAndUploadToSupabase } from "../lib/supabase-storage";
+import { downloadAndUploadToR2 } from "../lib/r2-storage";
 
 const prisma = new PrismaClient();
 
@@ -902,7 +902,7 @@ async function main() {
   // Step 3.5: Build structured profile for RAG
   const structuredProfile = await generateStructuredProfile(scrapedData, analysis.description);
 
-  // Step 4: Download and upload screenshot to Supabase with fallback logic
+  // Step 4: Download and upload screenshot to R2 with fallback logic
   let uploadedScreenshotUrl = "";
 
   // Build list of images to try (gameplay images first, then scraped screenshot)
@@ -920,9 +920,9 @@ async function main() {
     for (const imageUrl of imagesToTry) {
       attemptNum++;
 
-      // Skip if already uploaded to Supabase
-      if (imageUrl.includes("supabase.co")) {
-        console.log(`  ${attemptNum}. Already on Supabase, using existing URL`);
+      // Skip if already uploaded to R2
+      if (imageUrl.startsWith(process.env.R2_PUBLIC_URL || "")) {
+        console.log(`  ${attemptNum}. Already on R2, using existing URL`);
         uploadedScreenshotUrl = imageUrl;
         break;
       }
@@ -933,8 +933,8 @@ async function main() {
         const ext = imageUrl.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
         const filename = `${slug}-${Date.now()}-${attemptNum}.${ext}`;
 
-        // Download and upload (with validation inside downloadAndUploadToSupabase)
-        uploadedScreenshotUrl = await downloadAndUploadToSupabase(
+        // Download and upload (with validation inside downloadAndUploadToR2)
+        uploadedScreenshotUrl = await downloadAndUploadToR2(
           imageUrl,
           "game-screenshots",
           filename
